@@ -4,7 +4,7 @@ function love.load()
 
     -- 加载背景图片
     background = love.graphics.newImage("art/background.png")
-    land4 = love.graphics.newImage("art/land4.png")
+    land4 = love.graphics.newImage("art/land16.png")
 
     gamebackground = background
 
