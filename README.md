@@ -4,10 +4,10 @@
 FarmED is a “LÖVE 2D” -based educational game designed to teach the fundamentals of sustainable agriculture. Players can manage a farm, learn about crop growth, and make strategic decisions to optimize resources.  
 
 ## Main Features  
-- Farm Management: Plant, water, and harvest crops.  
-- Resource Management: Manage money, action points, and water supply.  
+- Farm Management: Plant, water, action points and harvest crops.  
+- Resource Management: Manage money and water supply.  
 - Dynamic Weather System: Different weather conditions affect crop growth.  
-- Shop & Warehouse: Buy seeds and tools, store harvested crops.  
+- Shop & Warehouse: Buy seeds , store harvested crops.  
 - Interactive UI: Simple and user-friendly interface for an engaging experience.  
 
 ## Contributors  
