@@ -25,7 +25,7 @@ function love.load()
     weather = "Sunny"
     
     -- 农场网格（第一阶段4格）
-    gridSize = 2 -- 2x2 的网格
+    gridSize = 4 -- 4x4 的网格
     grid = {}
     for x = 1, gridSize do
         grid[x] = {}
@@ -137,16 +137,18 @@ function drawStatusBar()
 end
 
 function drawGrid()
-    --startX/Y是花田地的起始坐标，
-    local gridStartX = 100
-    local gridStartY = 100
-    -- 格子大小
-    local cellSize = 120
-    -- 格子间距
+    local gridStartX = 300
+    local gridStartY = 203
+    local cellSize = 40
     local padding = 10
-    
+    local gridSize = 4  
+
     love.graphics.setFont(tinyFont)
     
+    -- 绘制统一的提示信息
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.printf("Click an empty plot to plant", gridStartX, gridStartY - 35, gridSize * (cellSize + padding), "center")
+
     for x = 1, gridSize do
         for y = 1, gridSize do
             local cellX = gridStartX + (x-1) * (cellSize + padding)
@@ -163,16 +165,15 @@ function drawGrid()
             love.graphics.setColor(0.3, 0.2, 0.1)
             love.graphics.rectangle("line", cellX, cellY, cellSize, cellSize)
             
-         --显示网格提示信息
-             love.graphics.setColor(1, 1, 1)
-            if grid[x][y].status == "empty" then
-                love.graphics.printf("Empty\nClick to plant", cellX, cellY + cellSize/3, cellSize, "center")
-            else
+            -- 显示作物状态（不再显示“Click to plant”）
+            love.graphics.setColor(1, 1, 1)
+            if grid[x][y].status ~= "empty" then
                 love.graphics.printf(grid[x][y].status .. "\nClick to view", cellX, cellY + cellSize/3, cellSize, "center")
             end
         end
     end
-end 
+end
+
 
 -- function drawToolbar()
 --     local toolbarX = 600
