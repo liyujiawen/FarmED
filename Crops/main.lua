@@ -4,7 +4,15 @@ function love.load()
 
     -- 加载背景图片
     background = love.graphics.newImage("art/background.png")
-    land4 = love.graphics.newImage("art/land4.png")
+    land4 = love.graphics.newImage("art/land16.png")
+    -- 加载作物图片
+    cropImages = {
+        wheat = love.graphics.newImage("art/wheat.png"),
+        carrot = love.graphics.newImage("art/carrot.png"),
+        corn = love.graphics.newImage("art/corn.png"),
+        banana = love.graphics.newImage("art/banana.png")
+    }
+    
 
     gamebackground = background
 
@@ -25,7 +33,7 @@ function love.load()
     weather = "Sunny"
     
     -- 农场网格（第一阶段4格）
-    gridSize = 2 -- 2x2 的网格
+    gridSize = 4 -- 4x4 的网格
     grid = {}
     for x = 1, gridSize do
         grid[x] = {}
@@ -34,31 +42,46 @@ function love.load()
         end
     end 
     
-    -- 玩家当前选择的工具
-    selectedTool = "none"
     
     -- 基础作物数据（只添加UI，不实现功能）
     crops = {
-        wheat = {name = "Wheat", growthTime = 5, waterNeed = 10, value = 25},
-        carrot = {name = "Carrot", growthTime = 6, waterNeed = 5, value = 30},
-        corn = {name = "Corn", growthTime = 8, waterNeed = 15, value = 40},
-        banana = {name = "Banana", growthTime = 10, waterNeed = 20, value = 50}
+        wheat = {name = "Wheat", growthTime = 5, waterNeed = 2, value = 15},
+        carrot = {name = "Carrot", growthTime = 6, waterNeed = 1, value = 30},
+        corn = {name = "Corn", growthTime = 8, waterNeed = 3, value = 50},
+        banana = {name = "Banana", growthTime = 10, waterNeed = 4, value = 70}
     }
     
     -- 玩家拥有的种子
     seeds = {
-        wheat = 2,
+        wheat = 5,
         carrot = 3,
         corn = 2,
         banana = 1
     }
+
+    -- 当前选中的种子，默认为小麦
+    selectedSeed = "wheat"
+
     
     -- 玩家拥有的水资源
     water = 20
 end
 
 function love.update(dt)
-    -- 这里暂时没有需要更新的内容
+    for x = 1, gridSize do
+        for y = 1, gridSize do
+            local plot = grid[x][y]
+            if plot.status == "planted" then
+                local crop = crops[plot.crop]
+                if plot.waterLevel >= crop.waterNeed then
+                    plot.growth = plot.growth + dt  -- 只在有足够水分时生长
+                end
+                if plot.growth >= crop.growthTime then
+                    plot.status = "matured"
+                end
+            end
+        end
+    end    
 end
 
 function love.draw()
@@ -107,8 +130,6 @@ function drawGame()
     -- 农场网格
     drawGrid()
     
-    -- 侧边工具栏
-    -- drawToolbar()
     
     -- 底部控制栏
     drawControlBar()
@@ -138,17 +159,16 @@ function drawStatusBar()
     love.graphics.printf("Action Points: " .. actionPoints .. "/10", itemWidth*2, 15, itemWidth, "center")
     love.graphics.printf("Weather: " .. weather, itemWidth*3, 15, itemWidth, "center")
     love.graphics.printf("Water: " .. water, itemWidth*4, 15, itemWidth, "center")
+    love.graphics.printf("Selected Seed: " .. crops[selectedSeed].name, itemWidth*5, 15, itemWidth, "center")
 end
 
-function drawGrid()
-    --startX/Y是花田地的起始坐标，
-    local gridStartX = 100
-    local gridStartY = 100
-    -- 格子大小
-    local cellSize = 120
-    -- 格子间距
+function drawGrid() 
+    local gridStartX = 300
+    local gridStartY = 207
+    local cellSize = 40
     local padding = 10
-    
+    local gridSize = 4  
+
     love.graphics.setFont(tinyFont)
     
     for x = 1, gridSize do
@@ -160,23 +180,52 @@ function drawGrid()
             if grid[x][y].status == "empty" then
                 love.graphics.setColor(0.6, 0.4, 0.2)
             else
-                love.graphics.setColor(0.4, 0.7, 0.3) -- 种植后的颜色
+                love.graphics.setColor(0.4, 0.7, 0.3)
             end
-            
             love.graphics.rectangle("fill", cellX, cellY, cellSize, cellSize)
             love.graphics.setColor(0.3, 0.2, 0.1)
             love.graphics.rectangle("line", cellX, cellY, cellSize, cellSize)
             
-         --显示网格提示信息
-             love.graphics.setColor(1, 1, 1)
-            if grid[x][y].status == "empty" then
-                love.graphics.printf("Empty\nClick to plant", cellX, cellY + cellSize/3, cellSize, "center")
-            else
-                love.graphics.printf(grid[x][y].status .. "\nClick to view", cellX, cellY + cellSize/3, cellSize, "center")
+            -- 作物和进度条绘制
+            if grid[x][y].status == "planted" or grid[x][y].status == "matured" then  
+                local plot = grid[x][y]
+                local crop = plot.crop
+
+                -- 绘制作物图片
+                if crop and cropImages[crop] then
+                    local img = cropImages[crop]
+                    local imgScale = (cellSize * 1.2) / math.max(img:getWidth(), img:getHeight())
+                    local drawX = cellX + (cellSize - img:getWidth() * imgScale) / 2
+                    local drawY = cellY + (cellSize - img:getHeight() * imgScale) / 2
+                    
+                    love.graphics.setColor(1, 1, 1)
+                    love.graphics.draw(img, drawX, drawY, 0, imgScale, imgScale)
+                end
+
+                -- 绘制双进度条（调整到格子顶部边缘）
+                local cropData = crops[crop]
+                if cropData then
+                    local barWidth = cellSize - 4
+                    local barHeight = 3
+                    local barX = cellX + 2
+                    local barY = cellY - 8  -- 移到格子外顶部
+
+                    -- 水分进度条（蓝色，带半透明背景）
+                    love.graphics.setColor(0, 0, 0, 0.5)
+                    love.graphics.rectangle("fill", barX, barY, barWidth, barHeight)
+                    love.graphics.setColor(0.2, 0.5, 1)
+                    love.graphics.rectangle("fill", barX, barY, barWidth * math.min(plot.waterLevel / cropData.waterNeed, 1), barHeight)
+
+                    -- 成熟进度条（绿色，在上方）
+                    love.graphics.setColor(0, 0, 0, 0.5)
+                    love.graphics.rectangle("fill", barX, barY - 5, barWidth, barHeight)
+                    love.graphics.setColor(0.3, 0.9, 0.3)
+                    love.graphics.rectangle("fill", barX, barY - 5, barWidth * math.min(plot.growth / cropData.growthTime, 1), barHeight)
+                end
             end
         end
     end
-end 
+end
 
 
 function drawControlBar()
@@ -239,15 +288,21 @@ function drawShop()
     love.graphics.setFont(tinyFont)
     local startY = 220
     local lineHeight = 40
-    
-    love.graphics.printf("Lettuce Seeds - $10/pack [Q to buy]", 0, startY, love.graphics.getWidth(), "center")
+
+    love.graphics.printf("Wheat Seeds - $10/pack [Q to buy]", 0, startY, love.graphics.getWidth(), "center")
     startY = startY + lineHeight
-    
+
     love.graphics.printf("Carrot Seeds - $15/pack [W to buy]", 0, startY, love.graphics.getWidth(), "center")
     startY = startY + lineHeight
-    
-    love.graphics.printf("Water - $5/unit [E to buy]", 0, startY, love.graphics.getWidth(), "center")
-    startY = startY + lineHeight * 2
+
+    love.graphics.printf("Corn Seeds - $20/pack [E to buy]", 0, startY, love.graphics.getWidth(), "center")
+    startY = startY + lineHeight
+
+    love.graphics.printf("Banana Seeds - $25/pack [R to buy]", 0, startY, love.graphics.getWidth(), "center")
+    startY = startY + lineHeight * 2  -- 间隔调整
+
+    love.graphics.printf("Water - $5/unit [T to buy]", 0, startY, love.graphics.getWidth(), "center")
+
     
     -- 返回游戏提示
     love.graphics.setColor(1, 0.7, 0.7)
@@ -269,12 +324,18 @@ function drawWarehouse()
     love.graphics.setFont(tinyFont)
     local startY = 220
     local lineHeight = 40
-    
-    love.graphics.printf("Lettuce - 0 units ($20/unit to sell) [Q to sell]", 0, startY, love.graphics.getWidth(), "center")
+
+    love.graphics.printf("Wheat - 0 units ($15/unit to sell) [Q to sell]", 0, startY, love.graphics.getWidth(), "center")
     startY = startY + lineHeight
-    
+
     love.graphics.printf("Carrot - 0 units ($30/unit to sell) [W to sell]", 0, startY, love.graphics.getWidth(), "center")
-    startY = startY + lineHeight * 2
+    startY = startY + lineHeight
+
+    love.graphics.printf("Corn - 0 units ($50/unit to sell) [E to sell]", 0, startY, love.graphics.getWidth(), "center")
+    startY = startY + lineHeight
+
+    love.graphics.printf("Banana - 0 units ($70/unit to sell) [R to sell]", 0, startY, love.graphics.getWidth(), "center")
+
     
     -- 返回游戏提示
     love.graphics.setColor(1, 0.7, 0.7)
@@ -337,23 +398,23 @@ function love.keypressed(key)
     if gameState == "menu" then
         if key == "return" then
             gameState = "game"
-            -- 仅在这里修改背景图片
             gamebackground = land4
             print("Changed background to land4") -- 调试信息
-        elseif key == "h" or key == "H" then  -- 添加对大写H的支持
+        elseif key == "h" or key == "H" then
             previousGameState = gameState
             gameState = "help"
-            print("Help screen opened from menu")  -- 调试信息
+            print("Help screen opened from menu") -- 调试信息
         end
     elseif gameState == "game" then
-        if key == "1" then
-            selectedTool = "plant"
-        elseif key == "2" then
-            selectedTool = "water"
-        elseif key == "3" then
-            selectedTool = "harvest"
+        if key == "q" then
+            selectedSeed = "wheat"
+        elseif key == "w" then
+            selectedSeed = "carrot"
+        elseif key == "e" then
+            selectedSeed = "corn"
+        elseif key == "r" then
+            selectedSeed = "banana"
         elseif key == "n" or key == "N" then
-            -- 这里只有UI提示，实际功能未实现
             day = day + 1
             actionPoints = 10 -- 重置行动点
         elseif key == "s" or key == "S" then
@@ -363,94 +424,71 @@ function love.keypressed(key)
         elseif key == "h" or key == "H" then
             previousGameState = gameState
             gameState = "help"
-            print("Help screen opened from game")  -- 调试信息
-        elseif key == "escape" and day == 1 then
-            -- 关闭教程提示
+            print("Help screen opened from game") -- 调试信息
         end
     elseif gameState == "shop" or gameState == "warehouse" or gameState == "help" then
         if key == "escape" then
-            -- 从帮助界面返回到之前的状态
             if gameState == "help" and previousGameState then
                 gameState = previousGameState
-                print("Returning to previous state: " .. previousGameState)  -- 调试信息
+                print("Returning to previous state: " .. previousGameState)
             else
                 gameState = "game"
-                print("Returning to game state")  -- 调试信息
+                print("Returning to game state")
             end
         end
     end
-    
-    -- 添加调试打印当前状态
+
     print("Current gameState: " .. gameState)
-end
-
-function plantCrop(x, y, cropType)
-    if grid[x][y].status == "empty" and seeds[cropType] and seeds[cropType] > 0 then
-        grid[x][y].status = "planted"
-        grid[x][y].crop = cropType
-        grid[x][y].waterProgress = 0
-        grid[x][y].growthProgress = 0
-        seeds[cropType] = seeds[cropType] - 1
-    end
-end
-
-function waterCrop(x, y)
-    if grid[x][y].status == "planted" then
-        local cropType = grid[x][y].crop
-        if water >= crops[cropType].waterNeed then
-            grid[x][y].waterProgress = grid[x][y].waterProgress + 1
-            water = water - crops[cropType].waterNeed
-        end
-    end
-end
-
-function updateGrowth()
-    for x = 1, gridSize do
-        for y = 1, gridSize do
-            if grid[x][y].status == "planted" and grid[x][y].waterProgress > 0 then
-                grid[x][y].growthProgress = grid[x][y].growthProgress + 1
-                if grid[x][y].growthProgress >= crops[grid[x][y].crop].growthTime then
-                    grid[x][y].status = "mature"
-                end
-            end
-        end
-    end
-end
-
-function harvestCrop(x, y)
-    if grid[x][y].status == "mature" then
-        local cropType = grid[x][y].crop
-        money = money + crops[cropType].value
-        grid[x][y] = {status = "empty", crop = nil, waterProgress = 0, growthProgress = 0}
-    end
 end
 
 function love.mousepressed(x, y, button)
     if gameState == "game" and button == 1 then
-        local gridStartX = 100
-        local gridStartY = 100
-        local cellSize = 120
+        local gridStartX = 300
+        local gridStartY = 207
+        local cellSize = 40
         local padding = 10
-        
+
         for gridX = 1, gridSize do
             for gridY = 1, gridSize do
-                local cellX = gridStartX + (gridX-1) * (cellSize + padding)
-                local cellY = gridStartY + (gridY-1) * (cellSize + padding)
-                
-                if x >= cellX and x <= cellX + cellSize and y >= cellY and y <= cellY + cellSize then
-                    if selectedTool == "plant" and grid[gridX][gridY].status == "empty" then
-                        print("Planting at", gridX, gridY)
-                        plantCrop(gridX, gridY, "wheat") 
-                        actionPoints = actionPoints - 1
-                    elseif selectedTool == "water" and grid[gridX][gridY].status == "planted" then
-                        print("Watering at", gridX, gridY)
-                        waterCrop(gridX, gridY)
-                        actionPoints = actionPoints - 1
-                    elseif selectedTool == "harvest" and grid[gridX][gridY].status == "mature" then
-                        print("Harvesting at", gridX, gridY)
-                        harvestCrop(gridX, gridY)
-                        actionPoints = actionPoints - 1
+                local cellX = gridStartX + (gridX - 1) * (cellSize + padding)
+                local cellY = gridStartY + (gridY - 1) * (cellSize + padding)
+
+                if x >= cellX and x <= cellX + cellSize and
+                   y >= cellY and y <= cellY + cellSize then
+
+                    -- 如果是空地，种植作物
+                    if grid[gridX][gridY].status == "empty" then
+                        if seeds[selectedSeed] and seeds[selectedSeed] > 0 then
+                            grid[gridX][gridY] = {
+                                status = "planted",
+                                crop = selectedSeed,
+                                growth = 0,
+                                waterLevel = 0
+                            }
+                            seeds[selectedSeed] = seeds[selectedSeed] - 1
+                            actionPoints = actionPoints - 1
+                            print("Planted:", crops[selectedSeed].name, "at", gridX, gridY)
+                        end
+                    
+                    -- 如果是已种植作物，浇水
+                    elseif grid[gridX][gridY].status == "planted" then
+                        if water > 0 and actionPoints > 0 then
+                            grid[gridX][gridY].waterLevel = grid[gridX][gridY].waterLevel + 1
+                            water = water - 1
+                            actionPoints = actionPoints - 1
+                            print("Watered:", gridX, gridY, 
+                                  "Water level:", grid[gridX][gridY].waterLevel,
+                                  "/", crops[grid[gridX][gridY].crop].waterNeed)
+                        else
+                            print(water > 0 and "No action points left!" or "Not enough water!")
+                        end
+                    
+                    -- 如果是成熟作物，收割（待实现）
+                    elseif grid[gridX][gridY].status == "matured" then
+                        -- 这里可以添加收割逻辑
+                        print("Crop matured! Ready to harvest.")
                     end
+
                     return
                 end
             end
