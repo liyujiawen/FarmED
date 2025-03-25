@@ -432,10 +432,10 @@ function drawWateringMode()
     love.graphics.setFont(tinyFont)
     local startY = 180
     local spacing = 40
-    love.graphics.printf("C: Carrot (-5 Water)", 0, startY, love.graphics.getWidth(), "center")
-    love.graphics.printf("W: Wheat (-10 Water)", 0, startY + spacing, love.graphics.getWidth(), "center")
-    love.graphics.printf("M: Corn (-15 Water)", 0, startY + spacing * 2, love.graphics.getWidth(), "center")
-    love.graphics.printf("B: Banana (-20 Water)", 0, startY + spacing * 3, love.graphics.getWidth(), "center")
+    love.graphics.printf("S: SweetPotatoes (-5 Water)", 0, startY, love.graphics.getWidth(), "center")
+    love.graphics.printf("B: Beans (-10 Water)", 0, startY + spacing, love.graphics.getWidth(), "center")
+    love.graphics.printf("C: Cabbage (-15 Water)", 0, startY + spacing * 2, love.graphics.getWidth(), "center")
+    love.graphics.printf("M: Maize (-20 Water)", 0, startY + spacing * 3, love.graphics.getWidth(), "center")
 
    
     
@@ -505,13 +505,13 @@ function love.keypressed(key)
 
         -- 处理浇水逻辑
         if waterMode then
-            if key == "c" or key == "C" then
+            if key == "s" or key == "S" then
                 if water >= 5 then water = water - 5 end
-            elseif key == "w" or key == "W" then
-                if water >= 10 then water = water - 10 end
-            elseif key == "m" or key == "M" then
-                if water >= 15 then water = water - 15 end
             elseif key == "b" or key == "B" then
+                if water >= 10 then water = water - 10 end
+            elseif key == "c" or key == "C" then
+                if water >= 15 then water = water - 15 end
+            elseif key == "m" or key == "M" then
                 if water >= 20 then water = water - 20 end
             elseif key == "q" or key == "Q" then
                 waterMode = false -- 退出浇水模式
