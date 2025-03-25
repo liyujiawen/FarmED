@@ -59,6 +59,14 @@ function love.load()
         banana = 1
     }
 
+    -- 玩家收获的作物
+    harvest = {
+        wheat = 0,
+        carrot = 0,
+        corn = 0,
+        banana = 0
+    }
+
     -- 当前选中的种子，默认为小麦
     selectedSeed = "wheat"
 
@@ -489,10 +497,20 @@ function love.mousepressed(x, y, button)
                             print(water > 0 and "No action points left!" or "Not enough water!")
                         end
                     
-                    -- 如果是成熟作物，收割（待实现）
+                        -- 如果是成熟作物，收获
                     elseif grid[gridX][gridY].status == "matured" then
-                        -- 这里可以添加收割逻辑
-                        print("Crop matured! Ready to harvest.")
+                        -- 收获逻辑
+                        local cropType = grid[gridX][gridY].crop
+                        harvest[cropType] = harvest[cropType] + 1
+                        
+                        -- 重置该地块
+                        grid[gridX][gridY] = {status = "empty"}
+                        
+                        -- 消耗行动点
+                        actionPoints = actionPoints - 1
+                        
+                        print("Harvested:", crops[cropType].name, 
+                              "Total harvest:", harvest[cropType])
                     end
 
                     -- 检查是否需要自动推进到下一天
