@@ -13,7 +13,6 @@ function love.load()
         banana = love.graphics.newImage("art/banana.png")
     }
     
-
     gamebackground = background
 
     -- 设置字体
@@ -42,7 +41,6 @@ function love.load()
         end
     end 
     
-    
     -- 基础作物数据（只添加UI，不实现功能）
     crops = {
         wheat = {name = "Wheat", growthTime = 5, waterNeed = 2, value = 15},
@@ -61,7 +59,6 @@ function love.load()
 
     -- 当前选中的种子，默认为小麦
     selectedSeed = "wheat"
-
     
     -- 玩家拥有的水资源
     water = 20
