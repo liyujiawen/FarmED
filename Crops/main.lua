@@ -488,7 +488,6 @@ function love.mousepressed(x, y, button)
                         -- 这里可以添加收割逻辑
                         print("Crop matured! Ready to harvest.")
                     end
-
                     return
                 end
             end
