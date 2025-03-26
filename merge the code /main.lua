@@ -52,10 +52,10 @@ function love.load()
     
     -- 基础作物数据（只添加UI，不实现功能）
     crops = {
-        Cabbage_seed = {name = "Cabbage", growthTime = 5, waterNeed = 2, value = 15},
-        Beans_seed = {name = "Beans", growthTime = 6, waterNeed = 1, value = 30},
-        Maize_seed = {name = "Maize", growthTime = 8, waterNeed = 3, value = 50},
-        Sweet_Potatoe_seed = {name = "Sweet Potato", growthTime = 10, waterNeed = 4, value = 70}
+        Cabbage_seed = {name = "Cabbage", growthTime = 2, waterNeed = 2, value = 15},
+        Beans_seed = {name = "Beans", growthTime = 3, waterNeed = 1, value = 30},
+        Maize_seed = {name = "Maize", growthTime = 4, waterNeed = 3, value = 50},
+        Sweet_Potatoe_seed = {name = "Sweet Potato", growthTime = 5, waterNeed = 4, value = 70}
     }
     
     -- 玩家拥有的种子和资金（从shop.lua中继承）
@@ -457,7 +457,8 @@ function love.keypressed(key)
         elseif key == "r" then
             selectedSeed = "Sweet_Potatoe_seed"
         elseif key == "n" or key == "N" then
-            day = day + 1
+            advanceToNextDay()
+        
             -- 随机天气（防止连续重复）
             local newWeather = weatherTypes[math.random(1, #weatherTypes)]
             while newWeather == weather do
@@ -621,9 +622,9 @@ function love.mousepressed(x, y, button)
                 if x >= cellX and x <= cellX + cellSize and
                    y >= cellY and y <= cellY + cellSize then
 
-                    -- 空地种植
+                    -- 空地种植（需要检查行动点）
                     if grid[gridX][gridY].status == "empty" then
-                        if player.inventory[selectedSeed] and player.inventory[selectedSeed] > 0 then
+                        if player.inventory[selectedSeed] and player.inventory[selectedSeed] > 0 and actionPoints > 0 then
                             grid[gridX][gridY] = {
                                 status = "planted",
                                 crop = selectedSeed,
@@ -633,9 +634,14 @@ function love.mousepressed(x, y, button)
                             player.inventory[selectedSeed] = player.inventory[selectedSeed] - 1
                             actionPoints = actionPoints - 1
                             print("Planted:", crops[selectedSeed].name, "at", gridX, gridY)
+                            
+                            -- 如果行动点用完，自动进入下一天
+                            if actionPoints <= 0 then
+                                advanceToNextDay()
+                            end
                         end
                     
-                    -- 已种植作物浇水
+                    -- 已种植作物浇水（需要检查行动点和水量）
                     elseif grid[gridX][gridY].status == "planted" then
                         if water > 0 and actionPoints > 0 then
                             grid[gridX][gridY].waterLevel = grid[gridX][gridY].waterLevel + 1
@@ -644,19 +650,42 @@ function love.mousepressed(x, y, button)
                             print("Watered:", gridX, gridY, 
                                   "Water level:", grid[gridX][gridY].waterLevel,
                                   "/", crops[grid[gridX][gridY].crop].waterNeed)
+                            
+                            -- 如果行动点用完，自动进入下一天
+                            if actionPoints <= 0 then
+                                advanceToNextDay()
+                            end
                         else
                             print(water > 0 and "No action points left!" or "Not enough water!")
                         end
                     
-                    -- 成熟作物收割
-                    elseif grid[gridX][gridY].status == "matured" then
-                        -- 收割逻辑占位
-                        print("Crop matured! Ready to harvest.")
+                    -- 成熟作物收割（需要检查行动点）
+                    elseif grid[gridX][gridY].status == "matured" and actionPoints > 0 then
+                        local cropKey = grid[gridX][gridY].crop
+                        local cropName = cropKey:gsub("_seed", "")
+                        
+                        -- 增加收获的作物数量到库存
+                        player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
+                        
+                        -- 重置该格子
+                        grid[gridX][gridY].status = "empty"
+                        grid[gridX][gridY].crop = nil
+                        grid[gridX][gridY].growth = 0
+                        grid[gridX][gridY].waterLevel = 0
+                        
+                        actionPoints = actionPoints - 1
+                        print("Harvested:", cropName, "at", gridX, gridY)
+                        
+                        -- 如果行动点用完，自动进入下一天
+                        if actionPoints <= 0 then
+                            advanceToNextDay()
+                        end
+                        return
                     end
-                    return
                 end
             end
         end
+    
     
     -- 商店/仓库数量调整按钮
     elseif (gameState == "shop" or gameState == "warehouse") and button == 1 then
@@ -670,4 +699,57 @@ function love.mousepressed(x, y, button)
             end
         end
     end
+end
+
+-- 新增函数：推进到下一天的逻辑
+function advanceToNextDay()
+    day = day + 1
+    
+    -- 重置行动点
+    actionPoints = 10
+    
+    -- 随机天气
+    local newWeather = weatherTypes[math.random(1, #weatherTypes)]
+    while newWeather == weather do
+        newWeather = weatherTypes[math.random(1, #weatherTypes)]
+    end
+    weather = newWeather
+    
+    -- 根据天气调整水量
+    if weather == "Sunny" then
+        water = 80
+    elseif weather == "Rainy" then
+        water = 120
+    end
+    
+    -- 作物生长和成熟逻辑
+    for x = 1, gridSize do
+        for y = 1, gridSize do
+            local plot = grid[x][y]
+            if plot.status == "planted" then
+                local cropData = crops[plot.crop]
+                
+                -- 检查水分和生长
+                if plot.waterLevel >= cropData.waterNeed then
+                    plot.growth = plot.growth + 1
+                    
+                    -- 检查是否成熟
+                    if plot.growth >= cropData.growthTime then
+                        plot.status = "matured"
+                        print(cropData.name .. " matured at grid [" .. x .. "," .. y .. "]")
+                    end
+
+                    if plot.status == "planted" then
+                        print("Pre-growth debug:", 
+                               "Crop:", plot.crop, 
+                               "Current growth:", plot.growth, 
+                               "Water level:", plot.waterLevel, 
+                               "Water need:", crops[plot.crop].waterNeed)
+                    end
+                end
+            end
+        end
+    end
+    
+    print("Advanced to Day " .. day .. ", Weather: " .. weather)
 end
