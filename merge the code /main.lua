@@ -56,10 +56,10 @@ function love.load()
     
     -- 基础作物数据（只添加UI，不实现功能）
     crops = {
-        Cabbage_seed = {name = "Cabbage", growthTime = 2, waterNeed = 4, value = 15, dailyWateringLimit = 3},
-        Beans_seed = {name = "Beans", growthTime = 3, waterNeed = 2, value = 30, dailyWateringLimit = 4},
-        Maize_seed = {name = "Maize", growthTime = 4, waterNeed = 6, value = 50, dailyWateringLimit = 2},
-        Sweet_Potatoe_seed = {name = "Sweet Potato", growthTime = 5, waterNeed = 8, value = 70, dailyWateringLimit = 1}
+        Cabbage_seed = {name = "Cabbage", growthTime = 2, waterNeed = 2, value = 15, dailyWateringLimit = 3},
+        Beans_seed = {name = "Beans", growthTime = 3, waterNeed = 1, value = 30, dailyWateringLimit = 4},
+        Maize_seed = {name = "Maize", growthTime = 4, waterNeed = 3, value = 50, dailyWateringLimit = 2},
+        Sweet_Potatoe_seed = {name = "Sweet Potato", growthTime = 5, waterNeed = 4, value = 70, dailyWateringLimit = 1}
     }
     
     -- 玩家拥有的种子和资金（从shop.lua中继承）
@@ -655,12 +655,13 @@ function love.mousepressed(x, y, button)
                     local cropData = crops[plot.crop]
                     
                     -- 检查是否达到每天的浇水上限
-                    if water > 0 and actionPoints > 0 and plot.dailyWateringCount < plot.wateringLimit then
-                        plot.waterLevel = plot.waterLevel + 1
-                        plot.wateringProgress = plot.wateringProgress + 1  -- 更新浇水进度
-                        water = water - 1
-                        actionPoints = actionPoints - 1
-                        plot.dailyWateringCount = plot.dailyWateringCount + 1
+                    if water > 0 and actionPoints > 0 and 
+                           plot.dailyWateringCount < plot.wateringLimit then
+                            plot.waterLevel = plot.waterLevel + 1
+                            plot.wateringProgress = plot.wateringProgress + 1  -- 更新浇水进度
+                            water = water - 1
+                            actionPoints = actionPoints - 1
+                            plot.dailyWateringCount = plot.dailyWateringCount + 1
                         
                         print("Watered:", gridX, gridY, 
                               "Water level:", plot.waterLevel,
