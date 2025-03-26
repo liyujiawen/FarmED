@@ -54,8 +54,8 @@ function love.load()
     crops = {
         Cabbage_seed = {name = "Cabbage", growthTime = 2, waterNeed = 2, value = 15},
         Beans_seed = {name = "Beans", growthTime = 3, waterNeed = 1, value = 30},
-        Maize_seed = {name = "Maize", growthTime = 4, waterNeed = 3, value = 50},
-        Sweet_Potatoe_seed = {name = "Sweet Potato", growthTime = 5, waterNeed = 4, value = 70}
+        Maize_seed = {name = "Maize", growthTime = 3, waterNeed = 3, value = 50},
+        Sweet_Potatoe_seed = {name = "Sweet Potato", growthTime = 4, waterNeed = 4, value = 70}
     }
     
     -- 玩家拥有的种子和资金（从shop.lua中继承）
