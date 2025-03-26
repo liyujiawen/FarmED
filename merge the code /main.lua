@@ -5,11 +5,17 @@ function love.load()
     waterMode = false  -- 是否处于浇水模式
     weatherTypes = {"Sunny", "Rainy"}  -- 可能的天气
 
-    
-
     -- 加载背景图片
     background = love.graphics.newImage("art/background.png")
     land4 = love.graphics.newImage("art/land16.png")
+
+    -- 加载作物图片
+    cropImages = {
+        Cabbage_seed = love.graphics.newImage("art/cabbage.png"),
+        Beans_seed = love.graphics.newImage("art/beans.png"),
+        Maize_seed = love.graphics.newImage("art/maize.png"),
+        Sweet_Potatoe_seed = love.graphics.newImage("art/sweetpotato.png")
+    }
 
     gamebackground = background
 
@@ -33,8 +39,6 @@ function love.load()
     elseif weather == "Rainy" then
     water = 120
     end
-
-
     
     -- 农场网格（第一阶段4格）
     gridSize = 4 -- 4x4 的网格
@@ -46,15 +50,12 @@ function love.load()
         end
     end 
     
-    -- 玩家当前选择的工具
-    selectedTool = "none"
-    
     -- 基础作物数据（只添加UI，不实现功能）
     crops = {
-        Cabbage = {name = "Cabbage", growthTime = 6, waterNeed = 1, value = 100},
-        Sweet_Potatoe = {name = "Sweet Potatoes", growthTime = 8, waterNeed = 2, value = 150},
-        Maize = {name = "Maize", growthTime = 10, waterNeed = 3, value = 130},
-        Beans = {name = "Beans", growthTime = 12, waterNeed = 4, value = 250}
+        Cabbage_seed = {name = "Cabbage", growthTime = 5, waterNeed = 2, value = 15},
+        Beans_seed = {name = "Beans", growthTime = 6, waterNeed = 1, value = 30},
+        Maize_seed = {name = "Maize", growthTime = 8, waterNeed = 3, value = 50},
+        Sweet_Potatoe_seed = {name = "Sweet Potato", growthTime = 10, waterNeed = 4, value = 70}
     }
     
     -- 玩家拥有的种子和资金（从shop.lua中继承）
@@ -156,16 +157,8 @@ function drawGame()
     -- 农场网格
     drawGrid()
     
-    -- 侧边工具栏
-    -- drawToolbar()
-    
     -- 底部控制栏
     drawControlBar()
-    
-    -- 如果是游戏开始的第一天，显示提示
-    -- if day == 1 and gameLevel == 1 then
-    --     drawTutorialTip()
-    -- end
 end
 
 function drawStatusBar()
@@ -191,7 +184,7 @@ end
 
 function drawGrid()
     local gridStartX = 300
-    local gridStartY = 203
+    local gridStartY = 207
     local cellSize = 40 
     local padding = 10 
     local gridSize = 4  
@@ -218,80 +211,47 @@ function drawGrid()
             love.graphics.setColor(0.3, 0.2, 0.1)
             love.graphics.rectangle("line", cellX, cellY, cellSize, cellSize)
             
-            -- 显示作物状态（不再显示“Click to plant”）
-            love.graphics.setColor(1, 1, 1)
-            if grid[x][y].status ~= "empty" then
-                love.graphics.printf(grid[x][y].status .. "\nClick to view", cellX, cellY + cellSize/3, cellSize, "center")
+            -- 作物和进度条绘制
+            if grid[x][y].status == "planted" or grid[x][y].status == "matured" then  
+                local plot = grid[x][y]
+                local cropKey = plot.crop
+
+                -- 绘制作物图片
+                if cropKey and cropImages[cropKey] then
+                    local img = cropImages[cropKey]
+                    local imgScale = (cellSize * 1.2) / math.max(img:getWidth(), img:getHeight())
+                    local drawX = cellX + (cellSize - img:getWidth() * imgScale) / 2
+                    local drawY = cellY + (cellSize - img:getHeight() * imgScale) / 2
+                    
+                    love.graphics.setColor(1, 1, 1)
+                    love.graphics.draw(img, drawX, drawY, 0, imgScale, imgScale)
+                end
+
+                -- 绘制双进度条（调整到格子顶部边缘）
+                local cropData = crops[cropKey]
+                if cropData then
+                    local barWidth = cellSize - 4
+                    local barHeight = 3
+                    local barX = cellX + 2
+                    local barY = cellY - 8  -- 移到格子外顶部
+
+                    -- 水分进度条（蓝色，带半透明背景）
+                    love.graphics.setColor(0, 0, 0, 0.5)
+                    love.graphics.rectangle("fill", barX, barY, barWidth, barHeight)
+                    love.graphics.setColor(0.2, 0.5, 1)
+                    love.graphics.rectangle("fill", barX, barY, barWidth * math.min(plot.waterLevel / cropData.waterNeed, 1), barHeight)
+
+                    -- 成熟进度条（绿色，在上方）
+                    love.graphics.setColor(0, 0, 0, 0.5)
+                    love.graphics.rectangle("fill", barX, barY - 5, barWidth, barHeight)
+                    love.graphics.setColor(0.3, 0.9, 0.3)
+                    love.graphics.rectangle("fill", barX, barY - 5, barWidth * math.min(plot.growth / cropData.growthTime, 1), barHeight)
+                end
             end
         end
     end
 end
 
-
--- function drawToolbar()
---     local toolbarX = 600
---     local toolbarY = 100
---     local toolbarWidth = 180
---     local buttonHeight = 40
---     local padding = 10
-    
---     -- 工具栏背景
---     love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
---     love.graphics.rectangle("fill", toolbarX, toolbarY, toolbarWidth, 300)
-    
---     -- 工具栏标题
---     love.graphics.setFont(smallFont)
---     love.graphics.setColor(1, 1, 1)
---     love.graphics.printf("Tools", toolbarX, toolbarY + 10, toolbarWidth, "center")
-    
---     -- 工具按钮
---     love.graphics.setFont(tinyFont)
---     local buttonY = toolbarY + 50
-    
---     -- 种植工具
---     if selectedTool == "plant" then
---         love.graphics.setColor(0.3, 0.8, 0.3)
---     else
---         love.graphics.setColor(0.5, 0.5, 0.5)
---     end
---     love.graphics.rectangle("fill", toolbarX + 10, buttonY, toolbarWidth - 20, buttonHeight)
---     love.graphics.setColor(1, 1, 1)
---     love.graphics.printf("Plant [1]", toolbarX + 10, buttonY + 10, toolbarWidth - 20, "center")
-    
---     -- 浇水工具
---     buttonY = buttonY + buttonHeight + padding
---     if selectedTool == "water" then
---         love.graphics.setColor(0.3, 0.3, 0.8)
---     else
---         love.graphics.setColor(0.5, 0.5, 0.5)
---     end
---     love.graphics.rectangle("fill", toolbarX + 10, buttonY, toolbarWidth - 20, buttonHeight)
---     love.graphics.setColor(1, 1, 1)
---     love.graphics.printf("Water [2]", toolbarX + 10, buttonY + 10, toolbarWidth - 20, "center")
-    
---     -- 收获工具
---     buttonY = buttonY + buttonHeight + padding
---     if selectedTool == "harvest" then
---         love.graphics.setColor(0.8, 0.6, 0.3)
---     else
---         love.graphics.setColor(0.5, 0.5, 0.5)
---     end
---     love.graphics.rectangle("fill", toolbarX + 10, buttonY, toolbarWidth - 20, buttonHeight)
---     love.graphics.setColor(1, 1, 1)
---     love.graphics.printf("Harvest [3]", toolbarX + 10, buttonY + 10, toolbarWidth - 20, "center")
-    
---     -- 种子选择（当选择种植工具时显示）
---     if selectedTool == "plant" then
---         buttonY = buttonY + buttonHeight + padding * 2
---         love.graphics.setColor(0.2, 0.6, 0.2)
---         love.graphics.rectangle("fill", toolbarX + 10, buttonY, toolbarWidth - 20, 100)
-        
---         love.graphics.setColor(1, 1, 1)
---         love.graphics.printf("Seeds Available:", toolbarX + 10, buttonY + 10, toolbarWidth - 20, "center")
---         love.graphics.printf("Lettuce: " .. seeds.lettuce .. " [Q]", toolbarX + 10, buttonY + 40, toolbarWidth - 20, "left")
---         love.graphics.printf("Carrot: " .. seeds.carrot .. " [W]", toolbarX + 10, buttonY + 65, toolbarWidth - 20, "left")
---     end
--- end
 
 function drawControlBar()
     local barY = love.graphics.getHeight() - 60
@@ -318,7 +278,6 @@ function drawControlBar()
 
     --浇水
     love.graphics.printf("[T] Enter Watering Mode", 610, barY + 15, 200, "left")
-
 end
 
 -- 从shop.lua继承的交易界面函数
@@ -451,9 +410,6 @@ function drawWateringMode()
     love.graphics.printf("C: Cabbage (-15 Water)", 0, startY + spacing * 2, love.graphics.getWidth(), "center")
     love.graphics.printf("M: Maize (-20 Water)", 0, startY + spacing * 3, love.graphics.getWidth(), "center")
 
-   
-    
-
         -- **水条参数**
         local barWidth = 300 -- 水条的最大宽度
         local barHeight = 20 -- 水条高度
@@ -492,12 +448,14 @@ function love.keypressed(key)
         end
 
     elseif gameState == "game" then
-        if key == "1" then
-            selectedTool = "plant"
-        elseif key == "2" then
-            selectedTool = "water"
-        elseif key == "3" then
-            selectedTool = "harvest"
+        if key == "q" then
+            selectedSeed = "Cabbage_seed"
+        elseif key == "w" then
+            selectedSeed = "Beans_seed"
+        elseif key == "e" then
+            selectedSeed = "Maize_seed"
+        elseif key == "r" then
+            selectedSeed = "Sweet_Potatoe_seed"
         elseif key == "n" or key == "N" then
             day = day + 1
             -- 随机天气（防止连续重复）
@@ -650,10 +608,9 @@ end
 
 function love.mousepressed(x, y, button)
     if gameState == "game" and button == 1 then
-        -- 检测点击农场网格
-        local gridStartX = 100
-        local gridStartY = 100
-        local cellSize = 120
+        local gridStartX = 300
+        local gridStartY = 207
+        local cellSize = 40
         local padding = 10
         
         for gridX = 1, gridSize do
@@ -663,32 +620,54 @@ function love.mousepressed(x, y, button)
                 
                 if x >= cellX and x <= cellX + cellSize and
                    y >= cellY and y <= cellY + cellSize then
-                    -- 这里只添加UI提示，不实现实际功能
-                    if selectedTool == "plant" and grid[gridX][gridY].status == "empty" then
-                        -- 种植逻辑的UI提示
-                        grid[gridX][gridY].status = "Seedling"
-                        actionPoints = actionPoints - 1
-                    elseif selectedTool == "water" and grid[gridX][gridY].status ~= "empty" then
-                        -- 浇水逻辑的UI提示
-                        grid[gridX][gridY].status = grid[gridX][gridY].status .. " (Watered)"
-                        actionPoints = actionPoints - 1
-                        water = water - 1
-                    elseif selectedTool == "harvest" and grid[gridX][gridY].status ~= "empty" then
-                        -- 收获逻辑的UI提示
-                        grid[gridX][gridY].status = "empty"
-                        actionPoints = actionPoints - 1
+
+                    -- 空地种植
+                    if grid[gridX][gridY].status == "empty" then
+                        if player.inventory[selectedSeed] and player.inventory[selectedSeed] > 0 then
+                            grid[gridX][gridY] = {
+                                status = "planted",
+                                crop = selectedSeed,
+                                growth = 0,
+                                waterLevel = 0
+                            }
+                            player.inventory[selectedSeed] = player.inventory[selectedSeed] - 1
+                            actionPoints = actionPoints - 1
+                            print("Planted:", crops[selectedSeed].name, "at", gridX, gridY)
+                        end
+                    
+                    -- 已种植作物浇水
+                    elseif grid[gridX][gridY].status == "planted" then
+                        if water > 0 and actionPoints > 0 then
+                            grid[gridX][gridY].waterLevel = grid[gridX][gridY].waterLevel + 1
+                            water = water - 1
+                            actionPoints = actionPoints - 1
+                            print("Watered:", gridX, gridY, 
+                                  "Water level:", grid[gridX][gridY].waterLevel,
+                                  "/", crops[grid[gridX][gridY].crop].waterNeed)
+                        else
+                            print(water > 0 and "No action points left!" or "Not enough water!")
+                        end
+                    
+                    -- 成熟作物收割
+                    elseif grid[gridX][gridY].status == "matured" then
+                        -- 收割逻辑占位
+                        print("Crop matured! Ready to harvest.")
                     end
                     return
                 end
             end
         end
+    
+    -- 商店/仓库数量调整按钮
     elseif (gameState == "shop" or gameState == "warehouse") and button == 1 then
-        -- 处理数量调整按钮点击（从shop.lua继承）
-        for _, btn in ipairs(buttonArea.buttons) do
-            local btnX = buttonArea.x + btn.offset
-            if x >= btnX and x <= btnX + 40 and y >= 400 and y <= 440 then
-                adjustQuantity(btn.text)
+        if buttonArea and buttonArea.buttons then
+            for _, btn in ipairs(buttonArea.buttons) do
+                local btnX = buttonArea.x + btn.offset
+                if x >= btnX and x <= btnX + 40 and 
+                   y >= 400 and y <= 440 then
+                    adjustQuantity(btn.text)
+                end
             end
         end
-   end
+    end
 end
