@@ -32,7 +32,7 @@ function love.load()
     -- 游戏状态变量
     day = 1
     money = 100
-    actionPoints = 10 -- 第一阶段有10个行动点
+    actionPoints = 20 -- 第一阶段有20个行动点
     weather = weatherTypes[math.random(1, #weatherTypes)] -- 随机天气
     if weather == "Sunny" then
     water = 80
@@ -46,16 +46,20 @@ function love.load()
     for x = 1, gridSize do
         grid[x] = {}
         for y = 1, gridSize do
-            grid[x][y] = {status = "empty"} -- 初始状态为空地
+            grid[x][y] = {
+                status = "empty",-- 初始状态为空地
+                wateringLimit = 0,  -- 每天浇水上限
+                dailyWateringCount = 0  -- 当天已浇水次数
+            } 
         end
     end 
     
     -- 基础作物数据（只添加UI，不实现功能）
     crops = {
-        Cabbage_seed = {name = "Cabbage", growthTime = 2, waterNeed = 2, value = 15},
-        Beans_seed = {name = "Beans", growthTime = 3, waterNeed = 1, value = 30},
-        Maize_seed = {name = "Maize", growthTime = 3, waterNeed = 3, value = 50},
-        Sweet_Potatoe_seed = {name = "Sweet Potato", growthTime = 4, waterNeed = 4, value = 70}
+        Cabbage_seed = {name = "Cabbage", growthTime = 2, waterNeed = 2, value = 15, dailyWateringLimit = 3},
+        Beans_seed = {name = "Beans", growthTime = 3, waterNeed = 1, value = 30, dailyWateringLimit = 4},
+        Maize_seed = {name = "Maize", growthTime = 4, waterNeed = 3, value = 50, dailyWateringLimit = 2},
+        Sweet_Potatoe_seed = {name = "Sweet Potato", growthTime = 5, waterNeed = 4, value = 70, dailyWateringLimit = 1}
     }
     
     -- 玩家拥有的种子和资金（从shop.lua中继承）
@@ -177,7 +181,7 @@ function drawStatusBar()
     -- 均匀分布五个状态项，使用居中对齐
     love.graphics.printf("Day " .. day, 0, 15, itemWidth, "center")
     love.graphics.printf("Balance: " .. formatKES(player.kes), itemWidth, 15, itemWidth, "center")
-    love.graphics.printf("Action Points: " .. actionPoints .. "/10", itemWidth*2, 15, itemWidth, "center")
+    love.graphics.printf("Action Points: " .. actionPoints .. "/20", itemWidth*2, 15, itemWidth, "center")
     love.graphics.printf("Weather: " .. weather, itemWidth*3, 15, itemWidth, "center")
     love.graphics.printf("Water: " .. water, itemWidth*4, 15, itemWidth, "center")
 end
@@ -239,7 +243,8 @@ function drawGrid()
                     love.graphics.setColor(0, 0, 0, 0.5)
                     love.graphics.rectangle("fill", barX, barY, barWidth, barHeight)
                     love.graphics.setColor(0.2, 0.5, 1)
-                    love.graphics.rectangle("fill", barX, barY, barWidth * math.min(plot.waterLevel / cropData.waterNeed, 1), barHeight)
+                    -- 使用 wateringProgress 来显示浇水进度
+                    love.graphics.rectangle("fill", barX, barY, barWidth * math.min(plot.wateringProgress / cropData.dailyWateringLimit, 1), barHeight)
 
                     -- 成熟进度条（绿色，在上方）
                     love.graphics.setColor(0, 0, 0, 0.5)
@@ -629,7 +634,10 @@ function love.mousepressed(x, y, button)
                                 status = "planted",
                                 crop = selectedSeed,
                                 growth = 0,
-                                waterLevel = 0
+                                waterLevel = 0,
+                                wateringLimit = crops[selectedSeed].dailyWateringLimit,  -- 初始化每天的浇水上限
+                                dailyWateringCount = 0,  -- 初始化当天已浇水次数
+                                wateringProgress = 0  -- 浇水进度条
                             }
                             player.inventory[selectedSeed] = player.inventory[selectedSeed] - 1
                             actionPoints = actionPoints - 1
@@ -642,21 +650,36 @@ function love.mousepressed(x, y, button)
                         end
                     
                     -- 已种植作物浇水（需要检查行动点和水量）
-                    elseif grid[gridX][gridY].status == "planted" then
-                        if water > 0 and actionPoints > 0 then
-                            grid[gridX][gridY].waterLevel = grid[gridX][gridY].waterLevel + 1
-                            water = water - 1
-                            actionPoints = actionPoints - 1
-                            print("Watered:", gridX, gridY, 
-                                  "Water level:", grid[gridX][gridY].waterLevel,
-                                  "/", crops[grid[gridX][gridY].crop].waterNeed)
-                            
+                elseif grid[gridX][gridY].status == "planted" then
+                    local plot = grid[gridX][gridY]
+                    local cropData = crops[plot.crop]
+                    
+                    -- 检查是否达到每天的浇水上限
+                    if water > 0 and actionPoints > 0 and plot.dailyWateringCount < plot.wateringLimit then
+                        plot.waterLevel = plot.waterLevel + 1
+                        plot.wateringProgress = plot.wateringProgress + 1  -- 更新浇水进度
+                        water = water - 1
+                        actionPoints = actionPoints - 1
+                        plot.dailyWateringCount = plot.dailyWateringCount + 1
+                        
+                        print("Watered:", gridX, gridY, 
+                              "Water level:", plot.waterLevel,
+                              "/", cropData.waterNeed,
+                              "Daily watering count:", plot.dailyWateringCount,
+                              "/", plot.wateringLimit)
+
                             -- 如果行动点用完，自动进入下一天
                             if actionPoints <= 0 then
                                 advanceToNextDay()
                             end
                         else
-                            print(water > 0 and "No action points left!" or "Not enough water!")
+                            if plot.dailyWateringCount >= plot.wateringLimit then
+                                print("Daily watering limit reached for this crop!")
+                            elseif water <= 0 then
+                                print("Not enough water!")
+                            else
+                                print("No action points left!")
+                            end
                         end
                     
                     -- 成熟作物收割（需要检查行动点）
@@ -672,6 +695,8 @@ function love.mousepressed(x, y, button)
                         grid[gridX][gridY].crop = nil
                         grid[gridX][gridY].growth = 0
                         grid[gridX][gridY].waterLevel = 0
+                        grid[gridX][gridY].wateringLimit = 0
+                        grid[gridX][gridY].dailyWateringCount = 0
                         
                         actionPoints = actionPoints - 1
                         print("Harvested:", cropName, "at", gridX, gridY)
@@ -706,7 +731,7 @@ function advanceToNextDay()
     day = day + 1
     
     -- 重置行动点
-    actionPoints = 10
+    actionPoints = 20
     
     -- 随机天气
     local newWeather = weatherTypes[math.random(1, #weatherTypes)]
@@ -728,6 +753,12 @@ function advanceToNextDay()
             local plot = grid[x][y]
             if plot.status == "planted" then
                 local cropData = crops[plot.crop]
+                
+                -- 重置每天的浇水计数和浇水上限
+                plot.dailyWateringCount = 0
+
+                -- 添加：重置水分进度条
+                plot.wateringProgress = 0
                 
                 -- 检查水分和生长
                 if plot.waterLevel >= cropData.waterNeed then
