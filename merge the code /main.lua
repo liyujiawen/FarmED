@@ -37,8 +37,9 @@ function love.load()
     if weather == "Sunny" then
     water = 80
     elseif weather == "Rainy" then
-    water = 120
-    end
+    water = 100
+    maxWater = 100
+   end
     
     -- 农场网格（第一阶段4格）
     gridSize = 4 -- 4x4 的网格
@@ -433,7 +434,7 @@ function drawWateringMode()
         -- **显示水量数值**
         love.graphics.setFont(smallFont)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.printf("Water: " .. water .. " / 120", 0, barY - 25, love.graphics.getWidth(), "center")
+        love.graphics.printf("Water: " .. water .. " / 100", 0, barY - 25, love.graphics.getWidth(), "center")
      -- 退出提示
     love.graphics.setColor(1, 0.7, 0.7)
     love.graphics.printf("Press Q to Exit", 0, love.graphics.getHeight() - 100, love.graphics.getWidth(), "center")
@@ -472,9 +473,11 @@ function love.keypressed(key)
             weather = newWeather
             if weather == "Sunny" then
                 water = 80
+                maxWater = 100
             elseif weather == "Rainy" then
-                water = 120
-            end
+                water = 100
+                maxWater = 100
+           end
 
         elseif key == "s" or key == "S" then
             gameState = "shop"
@@ -521,9 +524,11 @@ function love.keypressed(key)
             weather = newWeather
             if weather == "Sunny" then
                 water = 80
+                maxWater = 100
             elseif weather == "Rainy" then
-                water = 120
-            end
+                water = 100
+                maxWater = 100
+           end
             waterMode = false -- 退出浇水模式
         end
 
