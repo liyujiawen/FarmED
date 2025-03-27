@@ -209,7 +209,7 @@ function drawGrid()
             if grid[x][y].status == "empty" then
                 love.graphics.setColor(0.6, 0.4, 0.2)
             else
-                love.graphics.setColor(0.6, 0.4, 0.2) -- 种植后的底色一致
+                love.graphics.setColor(0.6, 0.4, 0.2) -- 种植后的颜色
             end
             
             love.graphics.rectangle("fill", cellX, cellY, cellSize, cellSize)
@@ -362,33 +362,16 @@ function drawHelp()
     local startY = 180
     local lineHeight = 30
     
-    love.graphics.printf("1: Select Planting Tool", controlsX, startY, 300, "left")
-    love.graphics.printf("2: Select Watering Tool", controlsX, startY + lineHeight, 300, "left")
-    love.graphics.printf("3: Select Harvesting Tool", controlsX, startY + lineHeight*2, 300, "left")
-    love.graphics.printf("Q/W: Select Seed Type (when planting)", controlsX, startY + lineHeight*3, 300, "left")
+    love.graphics.printf("Q: Select Cabbage Seed", controlsX, startY, 300, "left")
+    love.graphics.printf("W: Select Beans Seed", controlsX, startY + lineHeight, 300, "left")
+    love.graphics.printf("E: Select Maize Seed", controlsX, startY + lineHeight*2, 300, "left")
+    love.graphics.printf("R: Select Sweet Potatoe Seed", controlsX, startY + lineHeight*3, 300, "left")
     love.graphics.printf("N: Advance to Next Day", controlsX, startY + lineHeight*4, 300, "left")
     love.graphics.printf("S: Open Shop", controlsX, startY + lineHeight*5, 300, "left")
     love.graphics.printf("C: Open Warehouse", controlsX, startY + lineHeight*6, 300, "left")
     love.graphics.printf("H: Help Screen", controlsX, startY + lineHeight*7, 300, "left")
     love.graphics.printf("ESC: Return/Close Current Screen", controlsX, startY + lineHeight*8, 300, "left")
     
-    -- 添加游戏玩法信息
-    startY = startY + lineHeight * 10
-    love.graphics.setColor(0.8, 1, 0.8)
-    love.graphics.printf("How to Play:", 100, startY, love.graphics.getWidth() - 200, "left")
-    startY = startY + lineHeight
-    
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("1. Plant crops: Select planting tool (1), choose seed type (Q/W), then click on empty plot", 100, startY, love.graphics.getWidth() - 200, "left")
-    startY = startY + lineHeight
-    
-    love.graphics.printf("2. Water: Select watering tool (2), then click on planted crop", 100, startY, love.graphics.getWidth() - 200, "left")
-    startY = startY + lineHeight
-    
-    love.graphics.printf("3. Harvest: Select harvest tool (3), then click on mature crop", 100, startY, love.graphics.getWidth() - 200, "left")
-    startY = startY + lineHeight * 2
-    
-    love.graphics.printf("Stage 1 Goal: Successfully manage your farm for 14 days and harvest at least 10 crops", 100, startY, love.graphics.getWidth() - 200, "left")
     
     -- 返回游戏提示
     love.graphics.setColor(1, 0.7, 0.7)
