@@ -664,6 +664,20 @@ function love.mousepressed(x, y, button)
                            plot.dailyWateringCount < plot.wateringLimit then
                             plot.waterLevel = plot.waterLevel + 1
                             plot.wateringProgress = plot.wateringProgress + 1  -- 更新浇水进度
+                         -- 检查浇水进度是否满了
+                         if plot.wateringProgress >= cropData.dailyWateringLimit then
+                           -- 浇水进度满了，增加生长进度
+                           plot.growth = plot.growth + 1
+                           -- 重置浇水进度
+                           plot.wateringProgress = 0
+                
+                           -- 检查是否成熟
+                           if plot.growth >= cropData.growthTime then
+                              plot.status = "matured"
+                              print(cropData.name .. " matured at grid [" .. gridX .. "," .. gridY .. "]")
+                           end
+                       end
+            
                             water = water - 1
                             actionPoints = actionPoints - 1
                             plot.dailyWateringCount = plot.dailyWateringCount + 1
@@ -763,24 +777,24 @@ function advanceToNextDay()
                 -- 重置每天的浇水计数和浇水上限
                 plot.dailyWateringCount = 0
                 
-                -- 检查水分和生长
-                if plot.waterLevel >= cropData.waterNeed then
-                    plot.growth = plot.growth + 1
+                -- -- 检查水分和生长
+                -- if plot.waterLevel >= cropData.waterNeed then
+                --     plot.growth = plot.growth + 1
                     
-                    -- 检查是否成熟
-                    if plot.growth >= cropData.growthTime then
-                        plot.status = "matured"
-                        print(cropData.name .. " matured at grid [" .. x .. "," .. y .. "]")
-                    end
+                --     -- 检查是否成熟
+                --     if plot.growth >= cropData.growthTime then
+                --         plot.status = "matured"
+                --         print(cropData.name .. " matured at grid [" .. x .. "," .. y .. "]")
+                --     end
 
-                    if plot.status == "planted" then
-                        print("Pre-growth debug:", 
-                               "Crop:", plot.crop, 
-                               "Current growth:", plot.growth, 
-                               "Water level:", plot.waterLevel, 
-                               "Water need:", crops[plot.crop].waterNeed)
-                    end
-                end
+                --     if plot.status == "planted" then
+                --         print("Pre-growth debug:", 
+                --                "Crop:", plot.crop, 
+                --                "Current growth:", plot.growth, 
+                --                "Water level:", plot.waterLevel, 
+                --                "Water need:", crops[plot.crop].waterNeed)
+                --     end
+                -- end
             end
         end
     end
