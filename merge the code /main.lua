@@ -47,11 +47,20 @@ function love.load()
     for x = 1, gridSize do
         grid[x] = {}
         for y = 1, gridSize do
-            grid[x][y] = {
-                status = "empty",-- 初始状态为空地
-                wateringLimit = 0,  -- 每天浇水上限
-                dailyWateringCount = 0  -- 当天已浇水次数
-            } 
+            -- 左上角四格
+            if x >= 1 and x <= 2 and y >= 1 and y <= 2 then
+                grid[x][y] = {
+                    status = "empty",-- 初始状态为空地
+                    wateringLimit = 0,  -- 每天浇水上限
+                    dailyWateringCount = 0  -- 当天已浇水次数
+                }
+            else
+                grid[x][y] = {
+                    status = "locked",  -- 新增状态：锁定
+                    wateringLimit = 0,
+                    dailyWateringCount = 0
+                }
+            end
         end
     end 
     
@@ -207,9 +216,11 @@ function drawGrid()
             
             -- 绘制土地格子
             if grid[x][y].status == "empty" then
-                love.graphics.setColor(0.6, 0.4, 0.2)
+                love.graphics.setColor(0.6, 0.4, 0.2)  -- 可种植的土地
+            elseif grid[x][y].status == "locked" then
+                love.graphics.setColor(0.3, 0.3, 0.3)  -- 锁定的土地，显示为深灰色
             else
-                love.graphics.setColor(0.6, 0.4, 0.2) -- 种植后的颜色
+                love.graphics.setColor(0.6, 0.4, 0.2)
             end
             
             love.graphics.rectangle("fill", cellX, cellY, cellSize, cellSize)
@@ -615,111 +626,114 @@ function love.mousepressed(x, y, button)
                 if x >= cellX and x <= cellX + cellSize and
                    y >= cellY and y <= cellY + cellSize then
 
-                    -- 空地种植
-                    if grid[gridX][gridY].status == "empty" then
-                        if player.inventory[selectedSeed] and player.inventory[selectedSeed] > 0 and actionPoints > 0 then
-                            grid[gridX][gridY] = {
-                                status = "planted",
-                                crop = selectedSeed,
-                                growth = 0,
-                                waterLevel = 0,
-                                wateringLimit = crops[selectedSeed].dailyWateringLimit,
-                                dailyWateringCount = 0,
-                                wateringProgress = 0
-                            }
-                            player.inventory[selectedSeed] = player.inventory[selectedSeed] - 1
-                            actionPoints = actionPoints - 1
-                            print("Planted:", crops[selectedSeed].name, "at", gridX, gridY)
+                    -- 只有在非锁定的土地上才能执行操作
+                    if grid[gridX][gridY].status ~= "locked" then
+                        -- 空地种植
+                        if grid[gridX][gridY].status == "empty" then
+                            if player.inventory[selectedSeed] and player.inventory[selectedSeed] > 0 and actionPoints > 0 then
+                                grid[gridX][gridY] = {
+                                    status = "planted",
+                                    crop = selectedSeed,
+                                    growth = 0,
+                                    waterLevel = 0,
+                                    wateringLimit = crops[selectedSeed].dailyWateringLimit,
+                                    dailyWateringCount = 0,
+                                    wateringProgress = 0
+                                }
+                                player.inventory[selectedSeed] = player.inventory[selectedSeed] - 1
+                                actionPoints = actionPoints - 1
+                                print("Planted:", crops[selectedSeed].name, "at", gridX, gridY)
 
-                            if actionPoints <= 0 then
-                                advanceToNextDay()
-                            end
-                        end
-
-                    -- 已种植作物浇水（带不同耗水量）
-                    elseif grid[gridX][gridY].status == "planted" then
-                        if water < 3 then
-                            print("Water too low. Automatically advancing to next day.")
-                            advanceToNextDay()
-                            return
-                        end
-
-
-                        local plot = grid[gridX][gridY]
-                        local cropData = crops[plot.crop]
-
-                        -- 根据作物类型设置耗水量
-                        local waterCost = 1
-                        if plot.crop == "Sweet_Potatoe_seed" then
-                            waterCost = 3
-                        elseif plot.crop == "Beans_seed" then
-                            waterCost = 5
-                        elseif plot.crop == "Cabbage_seed" then
-                            waterCost = 7
-                        elseif plot.crop == "Maize_seed" then
-                            waterCost = 9
-                        end
-
-                        if water >= waterCost and actionPoints > 0 and 
-                           plot.dailyWateringCount < plot.wateringLimit then
-                            plot.waterLevel = plot.waterLevel + 1
-                            plot.wateringProgress = plot.wateringProgress + 1
-
-                            -- 浇水进度满了就增加成长
-                            if plot.wateringProgress >= cropData.dailyWateringLimit then
-                                plot.growth = plot.growth + 1
-                                plot.wateringProgress = 0
-                                if plot.growth >= cropData.growthTime then
-                                    plot.status = "matured"
-                                    print(cropData.name .. " matured at grid [" .. gridX .. "," .. gridY .. "]")
+                                if actionPoints <= 0 then
+                                    advanceToNextDay()
                                 end
                             end
 
-                            water = water - waterCost
-                            actionPoints = actionPoints - 1
-                            plot.dailyWateringCount = plot.dailyWateringCount + 1
+                        -- 已种植作物浇水（带不同耗水量）
+                        elseif grid[gridX][gridY].status == "planted" then
+                            if water < 3 then
+                                print("Water too low. Automatically advancing to next day.")
+                                advanceToNextDay()
+                                return
+                            end
 
-                            print("Watered:", gridX, gridY, 
-                                  "Water level:", plot.waterLevel,
-                                  "/", cropData.waterNeed,
-                                  "Daily watering count:", plot.dailyWateringCount,
-                                  "/", plot.wateringLimit,
-                                  "Cost:", waterCost)
+
+                            local plot = grid[gridX][gridY]
+                            local cropData = crops[plot.crop]
+
+                            -- 根据作物类型设置耗水量
+                            local waterCost = 1
+                            if plot.crop == "Sweet_Potatoe_seed" then
+                                waterCost = 3
+                            elseif plot.crop == "Beans_seed" then
+                                waterCost = 5
+                            elseif plot.crop == "Cabbage_seed" then
+                                waterCost = 7
+                            elseif plot.crop == "Maize_seed" then
+                                waterCost = 9
+                            end
+
+                            if water >= waterCost and actionPoints > 0 and 
+                            plot.dailyWateringCount < plot.wateringLimit then
+                                plot.waterLevel = plot.waterLevel + 1
+                                plot.wateringProgress = plot.wateringProgress + 1
+
+                                -- 浇水进度满了就增加成长
+                                if plot.wateringProgress >= cropData.dailyWateringLimit then
+                                    plot.growth = plot.growth + 1
+                                    plot.wateringProgress = 0
+                                    if plot.growth >= cropData.growthTime then
+                                        plot.status = "matured"
+                                        print(cropData.name .. " matured at grid [" .. gridX .. "," .. gridY .. "]")
+                                    end
+                                end
+
+                                water = water - waterCost
+                                actionPoints = actionPoints - 1
+                                plot.dailyWateringCount = plot.dailyWateringCount + 1
+
+                                print("Watered:", gridX, gridY, 
+                                    "Water level:", plot.waterLevel,
+                                    "/", cropData.waterNeed,
+                                    "Daily watering count:", plot.dailyWateringCount,
+                                    "/", plot.wateringLimit,
+                                    "Cost:", waterCost)
+
+                                if actionPoints <= 0 then
+                                    advanceToNextDay()
+                                end
+                            else
+                                if plot.dailyWateringCount >= plot.wateringLimit then
+                                    print("Daily watering limit reached for this crop!")
+                                elseif water < waterCost then
+                                    print("Not enough water!")
+                                else
+                                    print("No action points left!")
+                                end
+                            end
+
+                        -- 成熟作物收割
+                        elseif grid[gridX][gridY].status == "matured" and actionPoints > 0 then
+                            local cropKey = grid[gridX][gridY].crop
+                            local cropName = cropKey:gsub("_seed", "")
+                            player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
+
+                            -- 清除格子
+                            grid[gridX][gridY].status = "empty"
+                            grid[gridX][gridY].crop = nil
+                            grid[gridX][gridY].growth = 0
+                            grid[gridX][gridY].waterLevel = 0
+                            grid[gridX][gridY].wateringLimit = 0
+                            grid[gridX][gridY].dailyWateringCount = 0
+
+                            actionPoints = actionPoints - 1
+                            print("Harvested:", cropName, "at", gridX, gridY)
 
                             if actionPoints <= 0 then
                                 advanceToNextDay()
                             end
-                        else
-                            if plot.dailyWateringCount >= plot.wateringLimit then
-                                print("Daily watering limit reached for this crop!")
-                            elseif water < waterCost then
-                                print("Not enough water!")
-                            else
-                                print("No action points left!")
-                            end
+                            return
                         end
-
-                    -- 成熟作物收割
-                    elseif grid[gridX][gridY].status == "matured" and actionPoints > 0 then
-                        local cropKey = grid[gridX][gridY].crop
-                        local cropName = cropKey:gsub("_seed", "")
-                        player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
-
-                        -- 清除格子
-                        grid[gridX][gridY].status = "empty"
-                        grid[gridX][gridY].crop = nil
-                        grid[gridX][gridY].growth = 0
-                        grid[gridX][gridY].waterLevel = 0
-                        grid[gridX][gridY].wateringLimit = 0
-                        grid[gridX][gridY].dailyWateringCount = 0
-
-                        actionPoints = actionPoints - 1
-                        print("Harvested:", cropName, "at", gridX, gridY)
-
-                        if actionPoints <= 0 then
-                            advanceToNextDay()
-                        end
-                        return
                     end
                 end
             end
@@ -769,25 +783,6 @@ function advanceToNextDay()
                 
                 -- 重置每天的浇水计数和浇水上限
                 plot.dailyWateringCount = 0
-                
-                -- -- 检查水分和生长
-                -- if plot.waterLevel >= cropData.waterNeed then
-                --     plot.growth = plot.growth + 1
-                    
-                --     -- 检查是否成熟
-                --     if plot.growth >= cropData.growthTime then
-                --         plot.status = "matured"
-                --         print(cropData.name .. " matured at grid [" .. x .. "," .. y .. "]")
-                --     end
-
-                --     if plot.status == "planted" then
-                --         print("Pre-growth debug:", 
-                --                "Crop:", plot.crop, 
-                --                "Current growth:", plot.growth, 
-                --                "Water level:", plot.waterLevel, 
-                --                "Water need:", crops[plot.crop].waterNeed)
-                --     end
-                -- end
             end
         end
     end
