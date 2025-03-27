@@ -858,7 +858,7 @@ function advanceToNextDay()
     if weather == "Sunny" then
         water = 80
     elseif weather == "Rainy" then
-        water = 120
+        water = 100
     end
     
     -- 作物生长和成熟逻辑
