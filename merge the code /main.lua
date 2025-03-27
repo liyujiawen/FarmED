@@ -655,6 +655,13 @@ function love.mousepressed(x, y, button)
 
                     -- 已种植作物浇水（带不同耗水量）
                     elseif grid[gridX][gridY].status == "planted" then
+                        if water < 3 then
+                            print("Water too low. Automatically advancing to next day.")
+                            advanceToNextDay()
+                            return
+                        end
+
+
                         local plot = grid[gridX][gridY]
                         local cropData = crops[plot.crop]
 
