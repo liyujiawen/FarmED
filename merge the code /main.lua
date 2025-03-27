@@ -209,7 +209,7 @@ function drawGrid()
             if grid[x][y].status == "empty" then
                 love.graphics.setColor(0.6, 0.4, 0.2)
             else
-                love.graphics.setColor(0.3, 0.2, 0.1) -- 种植后的颜色
+                love.graphics.setColor(0.4, 0.7, 0.3) -- 种植后的颜色
             end
             
             love.graphics.rectangle("fill", cellX, cellY, cellSize, cellSize)
@@ -411,10 +411,10 @@ function drawWateringMode()
     love.graphics.setFont(tinyFont)
     local startY = 180
     local spacing = 40
-    love.graphics.printf("S: SweetPotatoes (-5 Water)", 0, startY, love.graphics.getWidth(), "center")
-    love.graphics.printf("B: Beans (-10 Water)", 0, startY + spacing, love.graphics.getWidth(), "center")
-    love.graphics.printf("C: Cabbage (-15 Water)", 0, startY + spacing * 2, love.graphics.getWidth(), "center")
-    love.graphics.printf("M: Maize (-20 Water)", 0, startY + spacing * 3, love.graphics.getWidth(), "center")
+    love.graphics.printf("S: SweetPotatoes (-3 Water)", 0, startY, love.graphics.getWidth(), "center")
+    love.graphics.printf("B: Beans (-5 Water)", 0, startY + spacing, love.graphics.getWidth(), "center")
+    love.graphics.printf("C: Cabbage (-7 Water)", 0, startY + spacing * 2, love.graphics.getWidth(), "center")
+    love.graphics.printf("M: Maize (-9 Water)", 0, startY + spacing * 3, love.graphics.getWidth(), "center")
 
         -- **水条参数**
         local barWidth = 300 -- 水条的最大宽度
@@ -457,13 +457,13 @@ function love.keypressed(key)
         if waterMode then
             -- 浇水模式下的按键控制
             if key == "s" or key == "S" then
-                if water >= 5 then water = water - 5 end
+                if water >= 3 then water = water - 3 end
             elseif key == "b" or key == "B" then
-                if water >= 10 then water = water - 10 end
+                if water >= 5 then water = water - 5 end
             elseif key == "c" or key == "C" then
-                if water >= 15 then water = water - 15 end
+                if water >= 7 then water = water - 7 end
             elseif key == "m" or key == "M" then
-                if water >= 20 then water = water - 20 end
+                if water >= 9 then water = water - 9 end
             elseif key == "q" or key == "Q" then
                 waterMode = false -- 退出浇水模式
                 print("Exited Watering Mode")
@@ -661,13 +661,13 @@ function love.mousepressed(x, y, button)
                         -- 根据作物类型设置耗水量
                         local waterCost = 1
                         if plot.crop == "Sweet_Potatoe_seed" then
-                            waterCost = 5
+                            waterCost = 3
                         elseif plot.crop == "Beans_seed" then
-                            waterCost = 10
+                            waterCost = 5
                         elseif plot.crop == "Cabbage_seed" then
-                            waterCost = 15
+                            waterCost = 7
                         elseif plot.crop == "Maize_seed" then
-                            waterCost = 20
+                            waterCost = 9
                         end
 
                         if water >= waterCost and actionPoints > 0 and 
