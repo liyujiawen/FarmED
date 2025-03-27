@@ -90,7 +90,7 @@ function love.load()
     -- 商品数据（从shop.lua中继承）
     shopItems = {
         { name = "Cabbage_seed", basePrice = 50.00 },
-        { name = "Sweet_Potatoe_Zseed",  basePrice = 80.00 },
+        { name = "Sweet_Potatoe_seed",  basePrice = 80.00 }, -- 修正拼写错误
         { name = "Maize_seed",   basePrice = 70.00 },
         { name = "Beans_seed", basePrice = 120.00 },
         { name = "Cabbage", basePrice = 100.00 },
@@ -112,12 +112,41 @@ function love.load()
     selectedItem = 1
     quantity = 1
     
+    -- 弹窗系统变量
+    showDayPopup = false     -- 是否显示天数弹窗
+    popupTimer = 0           -- 弹窗计时器
+    popupDuration = 2        -- 弹窗持续时间(秒)
+    newDayNumber = 1         -- 要在弹窗中显示的天数
+    popupAlpha = 0           -- 用于淡入淡出效果
+    popupFadeIn = true       -- 是否处于淡入阶段
 end
 
 function love.update(dt)
     -- 计算居中位置（从shop.lua中继承）
     local screenWidth = love.graphics.getWidth()
     buttonArea.x = (screenWidth - buttonArea.width) / 2
+    
+    -- 处理弹窗计时和淡入淡出效果
+    if showDayPopup then
+        popupTimer = popupTimer + dt
+        
+        -- 淡入效果(前0.5秒)
+        if popupTimer < 0.5 and popupFadeIn then
+            popupAlpha = popupTimer / 0.5
+        -- 淡出效果(最后0.5秒)
+        elseif popupTimer > popupDuration - 0.5 and not popupFadeIn then
+            popupAlpha = (popupDuration - popupTimer) / 0.5
+        -- 中间持续时间保持完全不透明
+        else
+            popupAlpha = 1
+        end
+        
+        -- 如果处于淡出模式，超时后自动关闭
+        if popupTimer >= popupDuration and not popupFadeIn then
+            showDayPopup = false
+            popupTimer = 0
+        end
+    end
 end
 
 function love.draw()
@@ -143,6 +172,10 @@ function love.draw()
             drawHelp()
         end
         
+    -- 如果弹窗激活，在最上层绘制弹窗
+    if showDayPopup then
+        drawDayPopup()
+    end
 end
 
 function drawMenu()
@@ -390,6 +423,44 @@ function drawHelp()
 
 end
 
+function drawDayPopup()
+    -- 半透明背景遮罩覆盖整个屏幕
+    love.graphics.setColor(0, 0, 0, 0.7 * popupAlpha)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    
+    -- 弹窗尺寸和位置
+    local popupWidth = 300
+    local popupHeight = 150
+    local popupX = (love.graphics.getWidth() - popupWidth) / 2
+    local popupY = (love.graphics.getHeight() - popupHeight) / 2
+    
+    -- 绘制弹窗框和边框
+    love.graphics.setColor(0.2, 0.2, 0.4, 0.9 * popupAlpha)
+    love.graphics.rectangle("fill", popupX, popupY, popupWidth, popupHeight, 10, 10)
+    love.graphics.setColor(0.8, 0.8, 1, popupAlpha)
+    love.graphics.rectangle("line", popupX, popupY, popupWidth, popupHeight, 10, 10)
+    
+    -- 弹窗标题文字
+    love.graphics.setFont(font)
+    love.graphics.setColor(1, 1, 1, popupAlpha)
+    love.graphics.printf("Welcome to Day " .. newDayNumber, popupX, popupY + 30, popupWidth, "center") 
+    
+    -- 根据天气显示附加信息
+    love.graphics.setFont(smallFont)
+    local weatherMessage = ""
+    if weather == "Sunny" then
+        weatherMessage = "Sunny Day! (80 water)"
+    elseif weather == "Rainy" then
+        weatherMessage = "Rainy Day! (100 water)"
+    end
+    love.graphics.printf(weatherMessage, popupX, popupY + 80, popupWidth, "center")
+    
+    -- 继续提示
+    love.graphics.setFont(tinyFont)
+    love.graphics.setColor(0.9, 0.9, 0.2, math.sin(love.timer.getTime() * 5) * 0.5 + 0.5 * popupAlpha)
+    love.graphics.printf("Press any key to continue", popupX, popupY + 115, popupWidth, "center")
+end
+
 function drawWateringMode()
     love.graphics.setColor(0, 0, 0, 0.7)
     love.graphics.rectangle("fill", 50, 50, love.graphics.getWidth() - 100, love.graphics.getHeight() - 100)
@@ -436,6 +507,12 @@ end
 
 
 function love.keypressed(key)
+    -- 如果弹窗显示且已经显示超过0.5秒，按任意键关闭弹窗
+    if showDayPopup and popupTimer > 0.5 then
+        popupFadeIn = false  -- 开始淡出效果
+        return  -- 弹窗激活时不处理其他按键操作
+    end
+
     if gameState == "menu" then
         if key == "return" then
             gameState = "game"
@@ -482,7 +559,7 @@ function love.keypressed(key)
                 end
                 weather = newWeather
                 if weather == "Sunny" then
-                    water = 80
+                    water = a80
                     maxWater = 100
                 elseif weather == "Rainy" then
                     water = 100
@@ -525,6 +602,13 @@ function love.keypressed(key)
                 maxWater = 100
             end
             waterMode = false -- 退出浇水模式
+            
+            -- 触发天数弹窗
+            showDayPopup = true
+            popupTimer = 0
+            newDayNumber = day
+            popupAlpha = 0
+            popupFadeIn = true
         end
 
     elseif gameState == "shop" or gameState == "warehouse" then
@@ -755,6 +839,9 @@ end
 
 -- 新增函数：推进到下一天的逻辑
 function advanceToNextDay()
+    -- 保存当前天数（用于弹窗显示）
+    local oldDay = day
+    
     day = day + 1
     
     -- 重置行动点
@@ -786,6 +873,13 @@ function advanceToNextDay()
             end
         end
     end
+    
+    -- 触发天数弹窗
+    showDayPopup = true
+    popupTimer = 0
+    newDayNumber = day
+    popupAlpha = 0
+    popupFadeIn = true
     
     print("Advanced to Day " .. day .. ", Weather: " .. weather)
 end
