@@ -209,7 +209,7 @@ function drawGrid()
             if grid[x][y].status == "empty" then
                 love.graphics.setColor(0.6, 0.4, 0.2)
             else
-                love.graphics.setColor(0.4, 0.7, 0.3) -- 种植后的颜色
+                love.graphics.setColor(0.3, 0.2, 0.1) -- 种植后的颜色
             end
             
             love.graphics.rectangle("fill", cellX, cellY, cellSize, cellSize)
