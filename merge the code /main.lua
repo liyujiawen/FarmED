@@ -277,7 +277,7 @@ function drawControlBar()
     love.graphics.printf("[S] Shop", 200, barY + 15, 150, "left")
     
     -- 仓库按钮
-    love.graphics.printf("[W] Warehouse", 340, barY + 15, 150, "left")
+    love.graphics.printf("[C] Warehouse", 340, barY + 15, 150, "left")
     
     -- 帮助按钮
     love.graphics.printf("[H] Help", 500, barY + 15, 150, "left")
@@ -368,7 +368,7 @@ function drawHelp()
     love.graphics.printf("Q/W: Select Seed Type (when planting)", controlsX, startY + lineHeight*3, 300, "left")
     love.graphics.printf("N: Advance to Next Day", controlsX, startY + lineHeight*4, 300, "left")
     love.graphics.printf("S: Open Shop", controlsX, startY + lineHeight*5, 300, "left")
-    love.graphics.printf("W: Open Warehouse", controlsX, startY + lineHeight*6, 300, "left")
+    love.graphics.printf("C: Open Warehouse", controlsX, startY + lineHeight*6, 300, "left")
     love.graphics.printf("H: Help Screen", controlsX, startY + lineHeight*7, 300, "left")
     love.graphics.printf("ESC: Return/Close Current Screen", controlsX, startY + lineHeight*8, 300, "left")
     
@@ -454,53 +454,8 @@ function love.keypressed(key)
         end
 
     elseif gameState == "game" then
-        if key == "q" then
-            selectedSeed = "Cabbage_seed"
-        elseif key == "w" then
-            selectedSeed = "Beans_seed"
-        elseif key == "e" then
-            selectedSeed = "Maize_seed"
-        elseif key == "r" then
-            selectedSeed = "Sweet_Potatoe_seed"
-        elseif key == "n" or key == "N" then
-            advanceToNextDay()
-        
-            -- 随机天气（防止连续重复）
-            local newWeather = weatherTypes[math.random(1, #weatherTypes)]
-            while newWeather == weather do
-                newWeather = weatherTypes[math.random(1, #weatherTypes)]
-            end
-            weather = newWeather
-            if weather == "Sunny" then
-                water = 80
-                maxWater = 100
-            elseif weather == "Rainy" then
-                water = 100
-                maxWater = 100
-           end
-
-        elseif key == "s" or key == "S" then
-            gameState = "shop"
-        elseif key == "w" or key == "W" then
-            gameState = "warehouse"
-        elseif key == "h" or key == "H" then
-            previousGameState = gameState
-            gameState = "help"
-            print("Help screen opened from game")  -- 调试信息
-        elseif key == "escape" and day == 1 then
-            -- 关闭教程提示（可选实现）
-
-        elseif key == "t" or key == "T" then
-            waterMode = not waterMode  -- 切换浇水模式
-            if waterMode then
-                print("Entered Watering Mode")  -- 调试信息
-            else
-                print("Exited Watering Mode") -- 调试信息
-            end
-        end
-
-        -- 处理浇水逻辑
         if waterMode then
+            -- 浇水模式下的按键控制
             if key == "s" or key == "S" then
                 if water >= 5 then water = water - 5 end
             elseif key == "b" or key == "B" then
@@ -511,6 +466,52 @@ function love.keypressed(key)
                 if water >= 20 then water = water - 20 end
             elseif key == "q" or key == "Q" then
                 waterMode = false -- 退出浇水模式
+                print("Exited Watering Mode")
+            end
+        else
+            -- 非浇水模式下的按键控制
+            if key == "q" then
+                selectedSeed = "Cabbage_seed"
+            elseif key == "w" then
+                selectedSeed = "Beans_seed"
+            elseif key == "e" then
+                selectedSeed = "Maize_seed"
+            elseif key == "r" then
+                selectedSeed = "Sweet_Potatoe_seed"
+            elseif key == "n" or key == "N" then
+                advanceToNextDay()
+
+                -- 随机天气（防止连续重复）
+                local newWeather = weatherTypes[math.random(1, #weatherTypes)]
+                while newWeather == weather do
+                    newWeather = weatherTypes[math.random(1, #weatherTypes)]
+                end
+                weather = newWeather
+                if weather == "Sunny" then
+                    water = 80
+                    maxWater = 100
+                elseif weather == "Rainy" then
+                    water = 100
+                    maxWater = 100
+                end
+            elseif key == "s" or key == "S" then
+                gameState = "shop"
+            elseif key == "C" or key == "c" then
+                gameState = "warehouse"
+            elseif key == "h" or key == "H" then
+                previousGameState = gameState
+                gameState = "help"
+                print("Help screen opened from game")  -- 调试信息
+            elseif key == "escape" and day == 1 then
+                -- 关闭教程提示（可选实现）
+
+            elseif key == "t" or key == "T" then
+                waterMode = not waterMode  -- 切换浇水模式
+                if waterMode then
+                    print("Entered Watering Mode")  -- 调试信息
+                else
+                    print("Exited Watering Mode") -- 调试信息
+                end
             end
         end
 
@@ -528,7 +529,7 @@ function love.keypressed(key)
             elseif weather == "Rainy" then
                 water = 100
                 maxWater = 100
-           end
+            end
             waterMode = false -- 退出浇水模式
         end
 
@@ -555,7 +556,6 @@ function love.keypressed(key)
     -- 添加调试打印当前状态
     print("Current gameState: " .. gameState)
 end
-
 -- 从shop.lua继承的导航处理函数
 function handleNavigation(key)
     local items = filterItems(gameState == "shop")
@@ -623,16 +623,16 @@ function love.mousepressed(x, y, button)
         local gridStartY = 207
         local cellSize = 40
         local padding = 10
-        
+
         for gridX = 1, gridSize do
             for gridY = 1, gridSize do
                 local cellX = gridStartX + (gridX-1) * (cellSize + padding)
                 local cellY = gridStartY + (gridY-1) * (cellSize + padding)
-                
+
                 if x >= cellX and x <= cellX + cellSize and
                    y >= cellY and y <= cellY + cellSize then
 
-                    -- 空地种植（需要检查行动点）
+                    -- 空地种植
                     if grid[gridX][gridY].status == "empty" then
                         if player.inventory[selectedSeed] and player.inventory[selectedSeed] > 0 and actionPoints > 0 then
                             grid[gridX][gridY] = {
@@ -640,88 +640,92 @@ function love.mousepressed(x, y, button)
                                 crop = selectedSeed,
                                 growth = 0,
                                 waterLevel = 0,
-                                wateringLimit = crops[selectedSeed].dailyWateringLimit,  -- 初始化每天的浇水上限
-                                dailyWateringCount = 0,  -- 初始化当天已浇水次数
-                                wateringProgress = 0  -- 浇水进度条
+                                wateringLimit = crops[selectedSeed].dailyWateringLimit,
+                                dailyWateringCount = 0,
+                                wateringProgress = 0
                             }
                             player.inventory[selectedSeed] = player.inventory[selectedSeed] - 1
                             actionPoints = actionPoints - 1
                             print("Planted:", crops[selectedSeed].name, "at", gridX, gridY)
-                            
-                            -- 如果行动点用完，自动进入下一天
+
                             if actionPoints <= 0 then
                                 advanceToNextDay()
                             end
                         end
-                    
-                    -- 已种植作物浇水（需要检查行动点和水量）
-                elseif grid[gridX][gridY].status == "planted" then
-                    local plot = grid[gridX][gridY]
-                    local cropData = crops[plot.crop]
-                    
-                    -- 检查是否达到每天的浇水上限
-                    if water > 0 and actionPoints > 0 and 
+
+                    -- 已种植作物浇水（带不同耗水量）
+                    elseif grid[gridX][gridY].status == "planted" then
+                        local plot = grid[gridX][gridY]
+                        local cropData = crops[plot.crop]
+
+                        -- 根据作物类型设置耗水量
+                        local waterCost = 1
+                        if plot.crop == "Sweet_Potatoe_seed" then
+                            waterCost = 5
+                        elseif plot.crop == "Beans_seed" then
+                            waterCost = 10
+                        elseif plot.crop == "Cabbage_seed" then
+                            waterCost = 15
+                        elseif plot.crop == "Maize_seed" then
+                            waterCost = 20
+                        end
+
+                        if water >= waterCost and actionPoints > 0 and 
                            plot.dailyWateringCount < plot.wateringLimit then
                             plot.waterLevel = plot.waterLevel + 1
-                            plot.wateringProgress = plot.wateringProgress + 1  -- 更新浇水进度
-                         -- 检查浇水进度是否满了
-                         if plot.wateringProgress >= cropData.dailyWateringLimit then
-                           -- 浇水进度满了，增加生长进度
-                           plot.growth = plot.growth + 1
-                           -- 重置浇水进度
-                           plot.wateringProgress = 0
-                
-                           -- 检查是否成熟
-                           if plot.growth >= cropData.growthTime then
-                              plot.status = "matured"
-                              print(cropData.name .. " matured at grid [" .. gridX .. "," .. gridY .. "]")
-                           end
-                       end
-            
-                            water = water - 1
+                            plot.wateringProgress = plot.wateringProgress + 1
+
+                            -- 浇水进度满了就增加成长
+                            if plot.wateringProgress >= cropData.dailyWateringLimit then
+                                plot.growth = plot.growth + 1
+                                plot.wateringProgress = 0
+                                if plot.growth >= cropData.growthTime then
+                                    plot.status = "matured"
+                                    print(cropData.name .. " matured at grid [" .. gridX .. "," .. gridY .. "]")
+                                end
+                            end
+
+                            water = water - waterCost
                             actionPoints = actionPoints - 1
                             plot.dailyWateringCount = plot.dailyWateringCount + 1
-                        
-                        print("Watered:", gridX, gridY, 
-                              "Water level:", plot.waterLevel,
-                              "/", cropData.waterNeed,
-                              "Daily watering count:", plot.dailyWateringCount,
-                              "/", plot.wateringLimit)
 
-                            -- 如果行动点用完，自动进入下一天
+                            print("Watered:", gridX, gridY, 
+                                  "Water level:", plot.waterLevel,
+                                  "/", cropData.waterNeed,
+                                  "Daily watering count:", plot.dailyWateringCount,
+                                  "/", plot.wateringLimit,
+                                  "Cost:", waterCost)
+
                             if actionPoints <= 0 then
                                 advanceToNextDay()
                             end
                         else
                             if plot.dailyWateringCount >= plot.wateringLimit then
                                 print("Daily watering limit reached for this crop!")
-                            elseif water <= 0 then
+                            elseif water < waterCost then
                                 print("Not enough water!")
                             else
                                 print("No action points left!")
                             end
                         end
-                    
-                    -- 成熟作物收割（需要检查行动点）
+
+                    -- 成熟作物收割
                     elseif grid[gridX][gridY].status == "matured" and actionPoints > 0 then
                         local cropKey = grid[gridX][gridY].crop
                         local cropName = cropKey:gsub("_seed", "")
-                        
-                        -- 增加收获的作物数量到库存
                         player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
-                        
-                        -- 重置该格子
+
+                        -- 清除格子
                         grid[gridX][gridY].status = "empty"
                         grid[gridX][gridY].crop = nil
                         grid[gridX][gridY].growth = 0
                         grid[gridX][gridY].waterLevel = 0
                         grid[gridX][gridY].wateringLimit = 0
                         grid[gridX][gridY].dailyWateringCount = 0
-                        
+
                         actionPoints = actionPoints - 1
                         print("Harvested:", cropName, "at", gridX, gridY)
-                        
-                        -- 如果行动点用完，自动进入下一天
+
                         if actionPoints <= 0 then
                             advanceToNextDay()
                         end
@@ -730,9 +734,8 @@ function love.mousepressed(x, y, button)
                 end
             end
         end
-    
-    
-    -- 商店/仓库数量调整按钮
+
+    -- 商店/仓库按钮
     elseif (gameState == "shop" or gameState == "warehouse") and button == 1 then
         if buttonArea and buttonArea.buttons then
             for _, btn in ipairs(buttonArea.buttons) do
