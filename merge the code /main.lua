@@ -757,9 +757,6 @@ function advanceToNextDay()
                 
                 -- 重置每天的浇水计数和浇水上限
                 plot.dailyWateringCount = 0
-
-                -- 添加：重置水分进度条
-                plot.wateringProgress = 0
                 
                 -- 检查水分和生长
                 if plot.waterLevel >= cropData.waterNeed then
