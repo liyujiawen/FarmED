@@ -14,7 +14,7 @@ function love.load()
         Cabbage_seed = love.graphics.newImage("art/cabbage.png"),
         Beans_seed = love.graphics.newImage("art/beans.png"),
         Maize_seed = love.graphics.newImage("art/maize.png"),
-        Sweet_Potatoe_seed = love.graphics.newImage("art/sweetpotato.png")
+        Sweet_Potato_seed = love.graphics.newImage("art/sweetpotato.png")
     }
 
     gamebackground = background
@@ -29,6 +29,14 @@ function love.load()
     previousGameState = nil  -- 添加记录前一个状态的变量
     gameLevel = 1
     
+    levelRequirements = {
+        {4, 1},  -- 第一关：4种作物各1个
+        {4, 3},  -- 第二关：4种作物各3个
+        {4, 5}   -- 第三关：4种作物各5个
+    }
+    showLevelPopup = false  -- 是否显示关卡弹窗
+    levelPopupText = ""     -- 关卡弹窗文本
+
     -- 游戏状态变量
     day = 1
     money = 100
@@ -69,19 +77,21 @@ function love.load()
         Cabbage_seed = {name = "Cabbage", growthTime = 2, waterNeed = 4, value = 15, dailyWateringLimit = 4},
         Beans_seed = {name = "Beans", growthTime = 3, waterNeed = 2, value = 30, dailyWateringLimit = 2},
         Maize_seed = {name = "Maize", growthTime = 4, waterNeed = 6, value = 50, dailyWateringLimit = 6},
-        Sweet_Potatoe_seed = {name = "Sweet Potato", growthTime = 5, waterNeed = 8, value = 70, dailyWateringLimit = 8}
+        Sweet_Potato_seed = {name = "Sweet Potato", growthTime = 5, waterNeed = 8, value = 70, dailyWateringLimit = 8}
     }
     
+    selectedSeed = "Cabbage_seed" -- 默认选择卷心菜种子
+
     -- 玩家拥有的种子和资金（从shop.lua中继承）
     player = {
         kes = 10000.00,
         inventory = {
             Cabbage_seed = 5,
-            Sweet_Potatoe_seed = 3,
+            Sweet_Potato_seed = 3,
             Maize_seed = 0,
             Beans_seed = 0,
             Cabbage = 0,
-            Sweet_Potatoe = 0,
+            Sweet_Potato = 0,
             Maize = 0,
             Beans = 0
         }
@@ -90,11 +100,11 @@ function love.load()
     -- 商品数据（从shop.lua中继承）
     shopItems = {
         { name = "Cabbage_seed", basePrice = 50.00 },
-        { name = "Sweet_Potatoe_seed",  basePrice = 80.00 }, -- 修正拼写错误
+        { name = "Sweet_Potato_seed",  basePrice = 80.00 }, -- 修正拼写错误
         { name = "Maize_seed",   basePrice = 70.00 },
         { name = "Beans_seed", basePrice = 120.00 },
         { name = "Cabbage", basePrice = 100.00 },
-        { name = "Sweet_Potatoe",  basePrice = 150.00 },
+        { name = "Sweet_Potato",  basePrice = 150.00 },
         { name = "Maize",   basePrice = 130.00 },
         { name = "Beans", basePrice = 250.00 }
    }
@@ -147,6 +157,28 @@ function love.update(dt)
             popupTimer = 0
         end
     end
+
+    -- 处理关卡弹窗计时和淡入淡出效果
+    if showLevelPopup then
+        popupTimer = popupTimer + dt
+        
+        -- 淡入效果(前0.5秒)
+        if popupTimer < 0.5 and popupFadeIn then
+            popupAlpha = popupTimer / 0.5
+        -- 淡出效果(最后0.5秒)
+        elseif popupTimer > popupDuration - 0.5 and not popupFadeIn then
+            popupAlpha = (popupDuration - popupTimer) / 0.5
+        -- 中间持续时间保持完全不透明
+        else
+            popupAlpha = 1
+        end
+        
+        -- 如果处于淡出模式，超时后自动关闭
+        if popupTimer >= popupDuration and not popupFadeIn then
+            showLevelPopup = false
+            popupTimer = 0
+        end
+    end
 end
 
 function love.draw()
@@ -175,6 +207,11 @@ function love.draw()
     -- 如果弹窗激活，在最上层绘制弹窗
     if showDayPopup then
         drawDayPopup()
+    end
+
+    -- 如果关卡弹窗激活，在最上层绘制
+    if showLevelPopup then
+        drawLevelPopup()
     end
 end
 
@@ -409,7 +446,7 @@ function drawHelp()
     love.graphics.printf("Q: Select Cabbage Seed", controlsX, startY, 300, "left")
     love.graphics.printf("W: Select Beans Seed", controlsX, startY + lineHeight, 300, "left")
     love.graphics.printf("E: Select Maize Seed", controlsX, startY + lineHeight*2, 300, "left")
-    love.graphics.printf("R: Select Sweet Potatoe Seed", controlsX, startY + lineHeight*3, 300, "left")
+    love.graphics.printf("R: Select Sweet Potato Seed", controlsX, startY + lineHeight*3, 300, "left")
     love.graphics.printf("N: Advance to Next Day", controlsX, startY + lineHeight*4, 300, "left")
     love.graphics.printf("S: Open Shop", controlsX, startY + lineHeight*5, 300, "left")
     love.graphics.printf("C: Open Warehouse", controlsX, startY + lineHeight*6, 300, "left")
@@ -461,6 +498,43 @@ function drawDayPopup()
     love.graphics.printf("Press any key to continue", popupX, popupY + 115, popupWidth, "center")
 end
 
+function drawLevelPopup()
+    -- 半透明背景遮罩
+    love.graphics.setColor(0, 0, 0, 0.7 * popupAlpha)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    
+    -- 弹窗框
+    local popupWidth = 400
+    local popupHeight = 200
+    local popupX = (love.graphics.getWidth() - popupWidth) / 2
+    local popupY = (love.graphics.getHeight() - popupHeight) / 2
+    
+    love.graphics.setColor(0.3, 0.5, 0.2, 0.9 * popupAlpha)
+    love.graphics.rectangle("fill", popupX, popupY, popupWidth, popupHeight, 10)
+    love.graphics.setColor(0.8, 1, 0.7, popupAlpha)
+    love.graphics.rectangle("line", popupX, popupY, popupWidth, popupHeight, 10)
+    
+    -- 弹窗内容
+    love.graphics.setFont(font)
+    love.graphics.setColor(1, 1, 1, popupAlpha)
+    love.graphics.printf(levelPopupText, popupX, popupY + 40, popupWidth, "center")
+    
+    -- 解锁信息
+    love.graphics.setFont(smallFont)
+    local unlockText = ""
+    if gameLevel == 2 then
+        unlockText = "Unlocked 3x3 land!"
+    elseif gameLevel == 3 then
+        unlockText = "Unlocked 4x4 land!"
+    end
+    love.graphics.printf(unlockText, popupX, popupY + 100, popupWidth, "center")
+    
+    -- 继续提示
+    love.graphics.setFont(tinyFont)
+    love.graphics.setColor(0.9, 0.9, 0.2, math.sin(love.timer.getTime() * 5) * 0.5 + 0.5 * popupAlpha)
+    love.graphics.printf("Press any key to continue", popupX, popupY + 150, popupWidth, "center")
+end
+
 function drawWateringMode()
     love.graphics.setColor(0, 0, 0, 0.7)
     love.graphics.rectangle("fill", 50, 50, love.graphics.getWidth() - 100, love.graphics.getHeight() - 100)
@@ -476,7 +550,7 @@ function drawWateringMode()
     love.graphics.setFont(tinyFont)
     local startY = 180
     local spacing = 40
-    love.graphics.printf("S: SweetPotatoes (-3 Water)", 0, startY, love.graphics.getWidth(), "center")
+    love.graphics.printf("S: SweetPotatos (-3 Water)", 0, startY, love.graphics.getWidth(), "center")
     love.graphics.printf("B: Beans (-5 Water)", 0, startY + spacing, love.graphics.getWidth(), "center")
     love.graphics.printf("C: Cabbage (-7 Water)", 0, startY + spacing * 2, love.graphics.getWidth(), "center")
     love.graphics.printf("M: Maize (-9 Water)", 0, startY + spacing * 3, love.graphics.getWidth(), "center")
@@ -507,6 +581,12 @@ end
 
 
 function love.keypressed(key)
+    -- 如果关卡弹窗显示且已经显示超过0.5秒，按任意键关闭弹窗
+    if showLevelPopup and popupTimer > 0.5 then
+        popupFadeIn = false
+        return
+    end
+
     -- 如果弹窗显示且已经显示超过0.5秒，按任意键关闭弹窗
     if showDayPopup and popupTimer > 0.5 then
         popupFadeIn = false  -- 开始淡出效果
@@ -517,6 +597,14 @@ function love.keypressed(key)
         if key == "return" then
             gameState = "game"
             gamebackground = land4
+
+            -- 进入游戏时触发 Level 1 弹窗
+            levelPopupText = "Welcome to Level 1"
+            showLevelPopup = true
+            popupTimer = 0
+            popupAlpha = 0
+            popupFadeIn = true
+
             print("Changed background to land4") -- 调试信息
         elseif key == "h" or key == "H" then  -- 添加对大写H的支持
             previousGameState = gameState
@@ -548,7 +636,7 @@ function love.keypressed(key)
             elseif key == "e" then
                 selectedSeed = "Maize_seed"
             elseif key == "r" then
-                selectedSeed = "Sweet_Potatoe_seed"
+                selectedSeed = "Sweet_Potato_seed"
             elseif key == "n" or key == "N" then
                 advanceToNextDay()
 
@@ -559,7 +647,7 @@ function love.keypressed(key)
                 end
                 weather = newWeather
                 if weather == "Sunny" then
-                    water = a80
+                    water = 80
                     maxWater = 100
                 elseif weather == "Rainy" then
                     water = 100
@@ -747,7 +835,7 @@ function love.mousepressed(x, y, button)
 
                             -- 根据作物类型设置耗水量
                             local waterCost = 1
-                            if plot.crop == "Sweet_Potatoe_seed" then
+                            if plot.crop == "Sweet_Potato_seed" then
                                 waterCost = 3
                             elseif plot.crop == "Beans_seed" then
                                 waterCost = 5
@@ -801,6 +889,37 @@ function love.mousepressed(x, y, button)
                             local cropKey = grid[gridX][gridY].crop
                             local cropName = cropKey:gsub("_seed", "")
                             player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
+
+                            -- 添加检查
+                            if checkLevelUp() then
+                                gameLevel = gameLevel + 1
+                                levelPopupText = "Welcome to Level " .. gameLevel
+                                showLevelPopup = true
+                                popupTimer = 0
+                                popupAlpha = 0
+                                popupFadeIn = true
+                                
+                                -- 根据关卡解锁土地
+                                if gameLevel == 2 then
+                                    -- 解锁3x3土地
+                                    for x = 1, gridSize do
+                                        for y = 1, gridSize do
+                                            if x <= 3 and y <= 3 and grid[x][y].status == "locked" then
+                                                grid[x][y].status = "empty"
+                                            end
+                                        end
+                                    end
+                                elseif gameLevel == 3 then
+                                    -- 解锁全部4x4土地
+                                    for x = 1, gridSize do
+                                        for y = 1, gridSize do
+                                            if grid[x][y].status == "locked" then
+                                                grid[x][y].status = "empty"
+                                            end
+                                        end
+                                    end
+                                end
+                            end
 
                             -- 清除格子
                             grid[gridX][gridY].status = "empty"
@@ -874,6 +993,36 @@ function advanceToNextDay()
         end
     end
     
+    -- 检查是否满足升级条件
+    if checkLevelUp() then
+        gameLevel = gameLevel + 1
+        levelPopupText = "Welcome to Level " .. gameLevel
+        showLevelPopup = true
+        popupTimer = 0
+        popupAlpha = 0
+        popupFadeIn = true
+        
+        -- 根据关卡解锁土地
+        if gameLevel == 2 then
+            -- 解锁3x3土地
+            for x = 1, gridSize do
+                for y = 1, gridSize do
+                    if x <= 3 and y <= 3 and grid[x][y].status == "locked" then
+                        grid[x][y].status = "empty"
+                    end
+                end
+            end
+        elseif gameLevel == 3 then
+            -- 解锁全部4x4土地
+            for x = 1, gridSize do
+                for y = 1, gridSize do
+                    if grid[x][y].status == "locked" then
+                        grid[x][y].status = "empty"
+                    end
+                end
+            end
+        end
+    end
     -- 触发天数弹窗
     showDayPopup = true
     popupTimer = 0
@@ -882,4 +1031,20 @@ function advanceToNextDay()
     popupFadeIn = true
     
     print("Advanced to Day " .. day .. ", Weather: " .. weather)
+end
+
+function checkLevelUp()
+    -- 如果已经是最高级，不检查
+    if gameLevel >= #levelRequirements then return false end
+    
+    local reqCrops, reqCount = levelRequirements[gameLevel][1], levelRequirements[gameLevel][2]
+    local cropNames = {"Cabbage", "Beans", "Maize", "Sweet_Potato"}
+    
+    -- 检查每种作物是否满足要求
+    for _, crop in ipairs(cropNames) do
+        if (player.inventory[crop] or 0) < reqCount then
+            return false
+        end
+    end
+    return true
 end
