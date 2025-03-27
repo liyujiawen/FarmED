@@ -14,7 +14,7 @@ function love.load()
         Cabbage_seed = love.graphics.newImage("art/cabbage.png"),
         Beans_seed = love.graphics.newImage("art/beans.png"),
         Maize_seed = love.graphics.newImage("art/maize.png"),
-        Sweet_Potato_seed = love.graphics.newImage("art/sweetpotato.png")
+        Sweet_Potatoe_seed = love.graphics.newImage("art/sweetpotato.png")
     }
 
     gamebackground = background
@@ -129,6 +129,23 @@ function love.load()
     newDayNumber = 1         -- 要在弹窗中显示的天数
     popupAlpha = 0           -- 用于淡入淡出效果
     popupFadeIn = true       -- 是否处于淡入阶段
+
+    -- 雨滴粒子初始化
+    raindrops = {}
+    for i = 1, 100 do
+        table.insert(raindrops, {
+            x = math.random(0, love.graphics.getWidth()),
+            y = math.random(0, love.graphics.getHeight()),
+            speed = math.random(200, 400)
+        })
+    end
+-- 如果关卡弹窗激活，在最上层绘制
+if showLevelPopup then
+    drawLevelPopup()
+end
+
+
+
 end
 
 function love.update(dt)
@@ -158,28 +175,45 @@ function love.update(dt)
         end
     end
 
+    -- ✅ 添加雨滴动画逻辑（如果是 Rainy 天气）
+    if weather == "Rainy" and raindrops then
+        for _, drop in ipairs(raindrops) do
+            drop.y = drop.y + drop.speed * dt
+            if drop.y > love.graphics.getHeight() then
+                drop.y = 0
+                drop.x = math.random(0, love.graphics.getWidth())
+            end
+
     -- 处理关卡弹窗计时和淡入淡出效果
     if showLevelPopup then
-        popupTimer = popupTimer + dt
-        
-        -- 淡入效果(前0.5秒)
+    popupTimer = popupTimer + dt
+
+    -- 淡入效果（前 0.5 秒）
         if popupTimer < 0.5 and popupFadeIn then
-            popupAlpha = popupTimer / 0.5
-        -- 淡出效果(最后0.5秒)
+        popupAlpha = popupTimer / 0.5
+
+    -- 淡出效果（最后 0.5 秒）
         elseif popupTimer > popupDuration - 0.5 and not popupFadeIn then
-            popupAlpha = (popupDuration - popupTimer) / 0.5
-        -- 中间持续时间保持完全不透明
-        else
-            popupAlpha = 1
-        end
-        
-        -- 如果处于淡出模式，超时后自动关闭
-        if popupTimer >= popupDuration and not popupFadeIn then
-            showLevelPopup = false
-            popupTimer = 0
+        popupAlpha = (popupDuration - popupTimer) / 0.5
+
+    -- 中间持续时间保持完全不透明
+         else
+        popupAlpha = 1
+         end
+
+    -- 如果处于淡出模式，超时后自动关闭
+            if popupTimer >= popupDuration and not popupFadeIn then
+                    showLevelPopup = false
+                     popupTimer = 0
+                 end
+            end
+
+
+            
         end
     end
 end
+
 
 function love.draw()
     -- 先绘制背景（保持整个代码中只有这一处修改）
@@ -207,12 +241,20 @@ function love.draw()
     -- 如果弹窗激活，在最上层绘制弹窗
     if showDayPopup then
         drawDayPopup()
+
+
     end
 
-    -- 如果关卡弹窗激活，在最上层绘制
-    if showLevelPopup then
-        drawLevelPopup()
+
+            -- 如果是雨天则绘制雨滴
+    if gameState == "game" and weather == "Rainy" then
+        love.graphics.setColor(1, 1, 1, 0.4)
+        for _, drop in ipairs(raindrops) do
+            love.graphics.line(drop.x, drop.y, drop.x, drop.y + 10)
+        end
     end
+
+    
 end
 
 function drawMenu()
