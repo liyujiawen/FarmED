@@ -42,12 +42,13 @@ function love.load()
     money = 100
     actionPoints = 20 -- 第一阶段有20个行动点
     weather = weatherTypes[math.random(1, #weatherTypes)] -- 随机天气
+    
     if weather == "Sunny" then
-    water = 80
+        water = 80
     elseif weather == "Rainy" then
-    water = 100
-    maxWater = 100
-   end
+        water = 100
+        maxWater = 100
+    end
     
     -- 农场网格（第一阶段4格）
     gridSize = 4 -- 4x4 的网格
@@ -95,7 +96,7 @@ function love.load()
             Maize = 0,
             Beans = 0
         }
-   }
+    }
     
     -- 商品数据（从shop.lua中继承）
     shopItems = {
@@ -107,7 +108,7 @@ function love.load()
         { name = "Sweet_Potato",  basePrice = 150.00 },
         { name = "Maize",   basePrice = 130.00 },
         { name = "Beans", basePrice = 250.00 }
-   }
+    }
     
     -- 动态按钮位置（从shop.lua中继承）
     buttonArea = {
@@ -139,13 +140,11 @@ function love.load()
             speed = math.random(200, 400)
         })
     end
--- 如果关卡弹窗激活，在最上层绘制
-if showLevelPopup then
-    drawLevelPopup()
-end
 
-
-
+    -- 如果关卡弹窗激活，在最上层绘制
+    if showLevelPopup then
+        drawLevelPopup()
+    end
 end
 
 function love.update(dt)
@@ -219,34 +218,31 @@ function love.draw()
     -- 先绘制背景（保持整个代码中只有这一处修改）
     love.graphics.setColor(1, 1, 1) -- 确保背景图片颜色正确
     love.graphics.draw(gamebackground, 0, 0, 0, 
-        love.graphics.getWidth() / gamebackground:getWidth(), 
-        love.graphics.getHeight() / gamebackground:getHeight())
+    love.graphics.getWidth() / gamebackground:getWidth(), 
+    love.graphics.getHeight() / gamebackground:getHeight())
 
-        if gameState == "menu" then
-            drawMenu()
-        elseif gameState == "game" then
-            if waterMode then
-                drawWateringMode() -- 进入浇水界面
-            else
-                drawGame()
-            end
-        elseif gameState == "shop" then
-            drawTransactionInterface("SHOP", true)
-        elseif gameState == "warehouse" then
-            drawTransactionInterface("WAREHOUSE", false)
-        elseif gameState == "help" then
-            drawHelp()
+    if gameState == "menu" then
+        drawMenu()
+    elseif gameState == "game" then
+        if waterMode then
+            drawWateringMode() -- 进入浇水界面
+        else
+            drawGame()
         end
+    elseif gameState == "shop" then
+        drawTransactionInterface("SHOP", true)
+    elseif gameState == "warehouse" then
+        drawTransactionInterface("WAREHOUSE", false)
+    elseif gameState == "help" then
+        drawHelp()
+    end
         
     -- 如果弹窗激活，在最上层绘制弹窗
     if showDayPopup then
         drawDayPopup()
-
-
     end
 
-
-            -- 如果是雨天则绘制雨滴
+    -- 如果是雨天则绘制雨滴
     if gameState == "game" and weather == "Rainy" then
         love.graphics.setColor(1, 1, 1, 0.4)
         for _, drop in ipairs(raindrops) do
@@ -254,13 +250,10 @@ function love.draw()
         end
     end
     -- 雨天整体暗色滤镜
-if gameState == "game" and weather == "Rainy" then
-    love.graphics.setColor(0, 0, 0, 0.4)  -- 半透明黑色遮罩
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-end
-
-
-    
+    if gameState == "game" and weather == "Rainy" then
+        love.graphics.setColor(0, 0, 0, 0.4)  -- 半透明黑色遮罩
+        love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    end  
 end
 
 function drawMenu()
@@ -603,26 +596,27 @@ function drawWateringMode()
     love.graphics.printf("C: Cabbage (-7 Water)", 0, startY + spacing * 2, love.graphics.getWidth(), "center")
     love.graphics.printf("M: Maize (-9 Water)", 0, startY + spacing * 3, love.graphics.getWidth(), "center")
 
-        -- **水条参数**
-        local barWidth = 300 -- 水条的最大宽度
-        local barHeight = 20 -- 水条高度
-        local barX = love.graphics.getWidth() / 2 - barWidth / 2 -- 水条位置
-        local barY = startY + spacing * 5 -- 水条位置（放在作物选项下方）
+    -- **水条参数**
+    local barWidth = 300 -- 水条的最大宽度
+    local barHeight = 20 -- 水条高度
+    local barX = love.graphics.getWidth() / 2 - barWidth / 2 -- 水条位置
+    local barY = startY + spacing * 5 -- 水条位置（放在作物选项下方）
     
-        -- **绘制水条背景**
-        love.graphics.setColor(0.2, 0.2, 0.2) -- 灰色背景
-        love.graphics.rectangle("fill", barX, barY, barWidth, barHeight)
+    -- **绘制水条背景**
+    love.graphics.setColor(0.2, 0.2, 0.2) -- 灰色背景
+    love.graphics.rectangle("fill", barX, barY, barWidth, barHeight)
     
-        -- **绘制当前水量**
-        local waterRatio = math.max(water / 120, 0) -- 计算水量比例（最大 120）
-        love.graphics.setColor(0.0, 0.7, 1.0) -- 蓝色水条
-        love.graphics.rectangle("fill", barX, barY, barWidth * waterRatio, barHeight)
+    -- **绘制当前水量**
+    local waterRatio = math.max(water / 120, 0) -- 计算水量比例（最大 120）
+    love.graphics.setColor(0.0, 0.7, 1.0) -- 蓝色水条
+    love.graphics.rectangle("fill", barX, barY, barWidth * waterRatio, barHeight)
     
-        -- **显示水量数值**
-        love.graphics.setFont(smallFont)
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.printf("Water: " .. water .. " / 100", 0, barY - 25, love.graphics.getWidth(), "center")
-     -- 退出提示
+    -- **显示水量数值**
+    love.graphics.setFont(smallFont)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.printf("Water: " .. water .. " / 100", 0, barY - 25, love.graphics.getWidth(), "center")
+    
+    -- 退出提示
     love.graphics.setColor(1, 0.7, 0.7)
     love.graphics.printf("Press Q to Exit", 0, love.graphics.getHeight() - 100, love.graphics.getWidth(), "center")
 end
@@ -710,8 +704,7 @@ function love.keypressed(key)
                 gameState = "help"
                 print("Help screen opened from game")  -- 调试信息
             elseif key == "escape" and day == 1 then
-                -- 关闭教程提示（可选实现）
-
+            -- 关闭教程提示（可选实现）
             elseif key == "t" or key == "T" then
                 waterMode = not waterMode  -- 切换浇水模式
                 if waterMode then
@@ -796,18 +789,44 @@ end
 -- 从shop.lua继承的购买函数
 function buyItem(item, qty)
     local total = item.basePrice * qty
-    if player.kes >= total then
-        player.kes = player.kes - total
-        player.inventory[item.name] = (player.inventory[item.name] or 0) + qty
+    -- 行动点充足
+    if actionPoints >= qty then
+        if player.kes >= total then
+            player.kes = player.kes - total
+            player.inventory[item.name] = (player.inventory[item.name] or 0) + qty
+            
+            -- Consume action points (1 point per item bought)
+            actionPoints = actionPoints - qty
+            
+            -- If action points reach 0, advance to next day
+            if actionPoints <= 0 then
+                advanceToNextDay()
+            end
+        end
+    else
+        print("Not enough action points to complete purchase!")
     end
 end
 
 -- 从shop.lua继承的销售函数
 function sellItem(item, qty)
     local stock = player.inventory[item.name] or 0
-    if stock >= qty then
-        player.kes = player.kes + (item.basePrice * 0.8 * qty)
-        player.inventory[item.name] = stock - qty
+    -- Check if there are enough action points
+    if actionPoints >= qty then
+        if stock >= qty then
+            player.kes = player.kes + (item.basePrice * 0.8 * qty)
+            player.inventory[item.name] = stock - qty
+            
+            -- Consume action points (1 point per item sold)
+            actionPoints = actionPoints - qty
+            
+            -- If action points reach 0, advance to next day
+            if actionPoints <= 0 then
+                advanceToNextDay()
+            end
+        end
+    else
+        print("Not enough action points to complete sale!")
     end
 end
 
