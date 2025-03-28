@@ -253,6 +253,12 @@ function love.draw()
             love.graphics.line(drop.x, drop.y, drop.x, drop.y + 10)
         end
     end
+    -- 雨天整体暗色滤镜
+if gameState == "game" and weather == "Rainy" then
+    love.graphics.setColor(0, 0, 0, 0.4)  -- 半透明黑色遮罩
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+end
+
 
     
 end
