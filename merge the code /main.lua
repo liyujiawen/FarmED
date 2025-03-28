@@ -628,17 +628,26 @@ end
 
 
 function love.keypressed(key)
-    -- 如果关卡弹窗显示且已经显示超过0.5秒，按任意键关闭弹窗
-    if showLevelPopup and popupTimer > 0.5 then
-        popupFadeIn = false
-        return
-    end
 
-    -- 如果弹窗显示且已经显示超过0.5秒，按任意键关闭弹窗
-    if showDayPopup and popupTimer > 0.5 then
-        popupFadeIn = false  -- 开始淡出效果
-        return  -- 弹窗激活时不处理其他按键操作
-    end
+   
+
+        -- 关卡弹窗关闭
+        if showLevelPopup and popupTimer > 0.5 then
+            showLevelPopup = false
+            popupTimer = 0
+            popupFadeIn = true
+            return
+        end
+    
+        -- ✅ 新增：天数弹窗关闭逻辑
+        if showDayPopup and popupTimer > 0.5 then
+            showDayPopup = false
+            popupTimer = 0
+            popupFadeIn = true
+            return
+        end
+    
+    
 
     if gameState == "menu" then
         if key == "return" then
@@ -901,7 +910,6 @@ function love.mousepressed(x, y, button)
                                 return
                             end
 
-
                             local plot = grid[gridX][gridY]
                             local cropData = crops[plot.crop]
 
@@ -918,7 +926,7 @@ function love.mousepressed(x, y, button)
                             end
 
                             if water >= waterCost and actionPoints > 0 and 
-                            plot.dailyWateringCount < plot.wateringLimit then
+                               plot.dailyWateringCount < plot.wateringLimit then
                                 plot.waterLevel = plot.waterLevel + 1
                                 plot.wateringProgress = plot.wateringProgress + 1
 
@@ -962,7 +970,7 @@ function love.mousepressed(x, y, button)
                             local cropName = cropKey:gsub("_seed", "")
                             player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
 
-                            -- 添加检查
+                            -- 升级弹窗检查
                             if checkLevelUp() then
                                 gameLevel = gameLevel + 1
                                 levelPopupText = "Welcome to Level " .. gameLevel
@@ -970,24 +978,28 @@ function love.mousepressed(x, y, button)
                                 popupTimer = 0
                                 popupAlpha = 0
                                 popupFadeIn = true
-                                
-                                -- 根据关卡解锁土地
-                                if gameLevel == 2 then
-                                    -- 解锁3x3土地
-                                    for x = 1, gridSize do
-                                        for y = 1, gridSize do
-                                            if x <= 3 and y <= 3 and grid[x][y].status == "locked" then
-                                                grid[x][y].status = "empty"
-                                            end
+                            else
+                                showDayPopup = true
+                                popupTimer = 0
+                                newDayNumber = day
+                                popupAlpha = 0
+                                popupFadeIn = true
+                            end
+
+                            -- 根据关卡解锁土地
+                            if gameLevel == 2 then
+                                for x = 1, gridSize do
+                                    for y = 1, gridSize do
+                                        if x <= 3 and y <= 3 and grid[x][y].status == "locked" then
+                                            grid[x][y].status = "empty"
                                         end
                                     end
-                                elseif gameLevel == 3 then
-                                    -- 解锁全部4x4土地
-                                    for x = 1, gridSize do
-                                        for y = 1, gridSize do
-                                            if grid[x][y].status == "locked" then
-                                                grid[x][y].status = "empty"
-                                            end
+                                end
+                            elseif gameLevel == 3 then
+                                for x = 1, gridSize do
+                                    for y = 1, gridSize do
+                                        if grid[x][y].status == "locked" then
+                                            grid[x][y].status = "empty"
                                         end
                                     end
                                 end
@@ -1027,6 +1039,7 @@ function love.mousepressed(x, y, button)
         end
     end
 end
+
 
 -- 新增函数：推进到下一天的逻辑
 function advanceToNextDay()
