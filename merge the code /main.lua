@@ -780,55 +780,65 @@ end
 -- 从shop.lua继承的交易处理函数
 function processTransaction()
     local item = filterItems(gameState == "shop")[selectedItem]
-    if gameState == "shop" then
-        buyItem(item, quantity)
+    
+    -- 提前检查行动点，避免无意义操作
+    if actionPoints > 0 then
+        if gameState == "shop" then
+            buyItem(item, quantity)
+        else
+            sellItem(item, quantity)
+        end
+        quantity = 1
     else
-        sellItem(item, quantity)
+        print("行动点不足，请按N进入下一天！")
     end
-    quantity = 1  -- 重置数量
 end
 
 -- 从shop.lua继承的购买函数
 function buyItem(item, qty)
+    -- 检查金钱和行动点是否足够
     local total = item.basePrice * qty
-    -- 行动点充足
-    if actionPoints >= qty then
-        if player.kes >= total then
-            player.kes = player.kes - total
-            player.inventory[item.name] = (player.inventory[item.name] or 0) + qty
-            
-            -- Consume action points (1 point per item bought)
-            actionPoints = actionPoints - qty
-            
-            -- If action points reach 0, advance to next day
-            if actionPoints <= 0 then
-                advanceToNextDay()
-            end
+    if player.kes >= total and actionPoints > 0 then
+        player.kes = player.kes - total
+        player.inventory[item.name] = (player.inventory[item.name] or 0) + qty
+        actionPoints = actionPoints - 1  -- 扣除1点行动点
+        print("购买成功，剩余行动点:", actionPoints)
+        
+        -- 如果行动点用完，自动进入下一天
+        if actionPoints <= 0 then
+            advanceToNextDay()
         end
     else
-        print("Not enough action points to complete purchase!")
+        -- 提示失败原因
+        if actionPoints <= 0 then
+            print("行动点不足！")
+        else
+            print("金钱不足！")
+        end
     end
 end
 
 -- 从shop.lua继承的销售函数
 function sellItem(item, qty)
+    -- 检查库存和行动点
     local stock = player.inventory[item.name] or 0
-    -- Check if there are enough action points
-    if actionPoints >= qty then
-        if stock >= qty then
-            player.kes = player.kes + (item.basePrice * 0.8 * qty)
-            player.inventory[item.name] = stock - qty
-            
-            -- Consume action points (1 point per item sold)
-            actionPoints = actionPoints - qty
-            
-            -- If action points reach 0, advance to next day
-            if actionPoints <= 0 then
-                advanceToNextDay()
-            end
+    if stock >= qty and actionPoints > 0 then
+        local earnings = item.basePrice * 0.8 * qty
+        player.kes = player.kes + earnings
+        player.inventory[item.name] = stock - qty
+        actionPoints = actionPoints - 1  -- 扣除1点行动点
+        print("出售成功，剩余行动点:", actionPoints)
+        
+        -- 行动点归零时进入下一天
+        if actionPoints <= 0 then
+            advanceToNextDay()
         end
     else
-        print("Not enough action points to complete sale!")
+        if actionPoints <= 0 then
+            print("行动点不足！")
+        else
+            print("库存不足！")
+        end
     end
 end
 
