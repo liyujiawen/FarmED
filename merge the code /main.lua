@@ -14,7 +14,7 @@ function love.load()
         Cabbage_seed = love.graphics.newImage("art/cabbage.png"),
         Beans_seed = love.graphics.newImage("art/beans.png"),
         Maize_seed = love.graphics.newImage("art/maize.png"),
-        Sweet_Potatoe_seed = love.graphics.newImage("art/sweetpotato.png")
+        Sweet_Potato_seed = love.graphics.newImage("art/sweetpotato.png")
     }
 
     gamebackground = background
@@ -241,6 +241,11 @@ function love.draw()
     if showDayPopup then
         drawDayPopup()
     end
+    -- 如果关卡弹窗激活，在最上层绘制
+    if showLevelPopup then
+    drawLevelPopup()
+    end
+
 
     -- 如果是雨天则绘制雨滴
     if gameState == "game" and weather == "Rainy" then
