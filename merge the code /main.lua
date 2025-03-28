@@ -460,7 +460,7 @@ end
 
 function drawHelp()
     love.graphics.setColor(0, 0, 0, 0.9)
-    love.graphics.rectangle("fill", 50, 50, love.graphics.getWidth() - 100, love.graphics.getHeight() - 100)
+    love.graphics.rectangle("fill", 50, 50, love.graphics.getWidth() - 100, love.graphics.getHeight() - 60)
     
     love.graphics.setFont(font)
     love.graphics.setColor(1, 1, 1)
@@ -474,10 +474,10 @@ function drawHelp()
     love.graphics.setFont(tinyFont)
     love.graphics.setColor(1, 1, 1)
     local controlsX = love.graphics.getWidth() / 2 - 150
-    local startY = 180
+    local startY = 170
     local lineHeight = 30
     
-    love.graphics.printf("Q: Select Cabbage Seed", controlsX, startY, 300, "left")
+    love.graphics.printf("Q: Select Cabbage Seed(then click land to plant)", controlsX, startY, 300, "left")
     love.graphics.printf("W: Select Beans Seed", controlsX, startY + lineHeight, 300, "left")
     love.graphics.printf("E: Select Maize Seed", controlsX, startY + lineHeight*2, 300, "left")
     love.graphics.printf("R: Select Sweet Potato Seed", controlsX, startY + lineHeight*3, 300, "left")
@@ -488,9 +488,17 @@ function drawHelp()
     love.graphics.printf("ESC: Return/Close Current Screen", controlsX, startY + lineHeight*8, 300, "left")
     
     
+    -- 新增：关卡系统说明
+    love.graphics.setFont(tinyFont)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.printf("GAME LEVELS:", controlsX, startY + lineHeight*9, 300, "left")
+    love.graphics.printf("- Level 1: 4 plots, harvest 1 of each crop", controlsX, startY + lineHeight*10, 300, "left")
+    love.graphics.printf("- Level 2: 9 plots, harvest 3 of each crop", controlsX, startY + lineHeight*11, 300, "left")
+    love.graphics.printf("- Level 3: 16 plots, harvest 5 of each crop", controlsX, startY + lineHeight*12, 300, "left")
+
     -- 返回游戏提示
     love.graphics.setColor(1, 0.7, 0.7)
-    love.graphics.printf("Press ESC to return", 0, love.graphics.getHeight() - 100, love.graphics.getWidth(), "center")
+    love.graphics.printf("Press ESC to return", 0, love.graphics.getHeight() - 46, love.graphics.getWidth(), "center")
 
 end
 
@@ -1103,7 +1111,7 @@ function advanceToNextDay()
                 end
             end
     
-            return  -- ✅ 避免显示 Day 弹窗
+            return  -- 避免显示 Day 弹窗
         end
     
         -- 否则显示普通天数弹窗
