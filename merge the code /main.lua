@@ -151,30 +151,44 @@ function love.update(dt)
     -- 计算居中位置（从shop.lua中继承）
     local screenWidth = love.graphics.getWidth()
     buttonArea.x = (screenWidth - buttonArea.width) / 2
-    
-    -- 处理弹窗计时和淡入淡出效果
+
+    -- 处理 Day 弹窗计时和淡入淡出效果
     if showDayPopup then
         popupTimer = popupTimer + dt
-        
-        -- 淡入效果(前0.5秒)
+
         if popupTimer < 0.5 and popupFadeIn then
             popupAlpha = popupTimer / 0.5
-        -- 淡出效果(最后0.5秒)
         elseif popupTimer > popupDuration - 0.5 and not popupFadeIn then
             popupAlpha = (popupDuration - popupTimer) / 0.5
-        -- 中间持续时间保持完全不透明
         else
             popupAlpha = 1
         end
-        
-        -- 如果处于淡出模式，超时后自动关闭
+
         if popupTimer >= popupDuration and not popupFadeIn then
             showDayPopup = false
             popupTimer = 0
         end
     end
 
-    -- ✅ 添加雨滴动画逻辑（如果是 Rainy 天气）
+    -- ✅ 处理关卡弹窗计时和淡入淡出效果（必须放在外面！）
+    if showLevelPopup then
+        popupTimer = popupTimer + dt
+
+        if popupTimer < 0.5 and popupFadeIn then
+            popupAlpha = popupTimer / 0.5
+        elseif popupTimer > popupDuration - 0.5 and not popupFadeIn then
+            popupAlpha = (popupDuration - popupTimer) / 0.5
+        else
+            popupAlpha = 1
+        end
+
+        if popupTimer >= popupDuration and not popupFadeIn then
+            showLevelPopup = false
+            popupTimer = 0
+        end
+    end
+
+    -- ✅ 雨滴动画逻辑（Rainy 天气）
     if weather == "Rainy" and raindrops then
         for _, drop in ipairs(raindrops) do
             drop.y = drop.y + drop.speed * dt
@@ -182,36 +196,10 @@ function love.update(dt)
                 drop.y = 0
                 drop.x = math.random(0, love.graphics.getWidth())
             end
-
-    -- 处理关卡弹窗计时和淡入淡出效果
-    if showLevelPopup then
-    popupTimer = popupTimer + dt
-
-    -- 淡入效果（前 0.5 秒）
-        if popupTimer < 0.5 and popupFadeIn then
-        popupAlpha = popupTimer / 0.5
-
-    -- 淡出效果（最后 0.5 秒）
-        elseif popupTimer > popupDuration - 0.5 and not popupFadeIn then
-        popupAlpha = (popupDuration - popupTimer) / 0.5
-
-    -- 中间持续时间保持完全不透明
-         else
-        popupAlpha = 1
-         end
-
-    -- 如果处于淡出模式，超时后自动关闭
-            if popupTimer >= popupDuration and not popupFadeIn then
-                    showLevelPopup = false
-                     popupTimer = 0
-                 end
-            end
-
-
-            
         end
     end
 end
+
 
 
 function love.draw()
@@ -879,7 +867,6 @@ function love.mousepressed(x, y, button)
                 if x >= cellX and x <= cellX + cellSize and
                    y >= cellY and y <= cellY + cellSize then
 
-                    -- 只有在非锁定的土地上才能执行操作
                     if grid[gridX][gridY].status ~= "locked" then
                         -- 空地种植
                         if grid[gridX][gridY].status == "empty" then
@@ -902,7 +889,7 @@ function love.mousepressed(x, y, button)
                                 end
                             end
 
-                        -- 已种植作物浇水（带不同耗水量）
+                        -- 浇水
                         elseif grid[gridX][gridY].status == "planted" then
                             if water < 3 then
                                 print("Water too low. Automatically advancing to next day.")
@@ -913,7 +900,6 @@ function love.mousepressed(x, y, button)
                             local plot = grid[gridX][gridY]
                             local cropData = crops[plot.crop]
 
-                            -- 根据作物类型设置耗水量
                             local waterCost = 1
                             if plot.crop == "Sweet_Potato_seed" then
                                 waterCost = 3
@@ -925,12 +911,10 @@ function love.mousepressed(x, y, button)
                                 waterCost = 9
                             end
 
-                            if water >= waterCost and actionPoints > 0 and 
-                               plot.dailyWateringCount < plot.wateringLimit then
+                            if water >= waterCost and actionPoints > 0 and plot.dailyWateringCount < plot.wateringLimit then
                                 plot.waterLevel = plot.waterLevel + 1
                                 plot.wateringProgress = plot.wateringProgress + 1
 
-                                -- 浇水进度满了就增加成长
                                 if plot.wateringProgress >= cropData.dailyWateringLimit then
                                     plot.growth = plot.growth + 1
                                     plot.wateringProgress = 0
@@ -944,7 +928,7 @@ function love.mousepressed(x, y, button)
                                 actionPoints = actionPoints - 1
                                 plot.dailyWateringCount = plot.dailyWateringCount + 1
 
-                                print("Watered:", gridX, gridY, 
+                                print("Watered:", gridX, gridY,
                                     "Water level:", plot.waterLevel,
                                     "/", cropData.waterNeed,
                                     "Daily watering count:", plot.dailyWateringCount,
@@ -970,7 +954,7 @@ function love.mousepressed(x, y, button)
                             local cropName = cropKey:gsub("_seed", "")
                             player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
 
-                            -- 升级弹窗检查
+                            -- 等级判断（收获后检查是否晋级）
                             if checkLevelUp() then
                                 gameLevel = gameLevel + 1
                                 levelPopupText = "Welcome to Level " .. gameLevel
@@ -986,7 +970,7 @@ function love.mousepressed(x, y, button)
                                 popupFadeIn = true
                             end
 
-                            -- 根据关卡解锁土地
+                            -- 解锁土地逻辑
                             if gameLevel == 2 then
                                 for x = 1, gridSize do
                                     for y = 1, gridSize do
@@ -1006,12 +990,15 @@ function love.mousepressed(x, y, button)
                             end
 
                             -- 清除格子
-                            grid[gridX][gridY].status = "empty"
-                            grid[gridX][gridY].crop = nil
-                            grid[gridX][gridY].growth = 0
-                            grid[gridX][gridY].waterLevel = 0
-                            grid[gridX][gridY].wateringLimit = 0
-                            grid[gridX][gridY].dailyWateringCount = 0
+                            grid[gridX][gridY] = {
+                                status = "empty",
+                                crop = nil,
+                                growth = 0,
+                                waterLevel = 0,
+                                wateringLimit = 0,
+                                dailyWateringCount = 0,
+                                wateringProgress = 0
+                            }
 
                             actionPoints = actionPoints - 1
                             print("Harvested:", cropName, "at", gridX, gridY)
@@ -1026,19 +1013,18 @@ function love.mousepressed(x, y, button)
             end
         end
 
-    -- 商店/仓库按钮
     elseif (gameState == "shop" or gameState == "warehouse") and button == 1 then
         if buttonArea and buttonArea.buttons then
             for _, btn in ipairs(buttonArea.buttons) do
                 local btnX = buttonArea.x + btn.offset
-                if x >= btnX and x <= btnX + 40 and 
-                   y >= 400 and y <= 440 then
+                if x >= btnX and x <= btnX + 40 and y >= 400 and y <= 440 then
                     adjustQuantity(btn.text)
                 end
             end
         end
     end
 end
+
 
 
 -- 新增函数：推进到下一天的逻辑
@@ -1079,53 +1065,54 @@ function advanceToNextDay()
     end
     
     -- 检查是否满足升级条件
-    if checkLevelUp() then
-        gameLevel = gameLevel + 1
-        levelPopupText = "Welcome to Level " .. gameLevel
-        showLevelPopup = true
+        -- 检查是否满足升级条件
+        if checkLevelUp() then
+            gameLevel = gameLevel + 1
+            levelPopupText = "Welcome to Level " .. gameLevel
+            showLevelPopup = true
+            popupTimer = 0
+            popupAlpha = 0
+            popupFadeIn = true
+    
+            -- 根据关卡解锁土地
+            if gameLevel == 2 then
+                for x = 1, gridSize do
+                    for y = 1, gridSize do
+                        if x <= 3 and y <= 3 and grid[x][y].status == "locked" then
+                            grid[x][y].status = "empty"
+                        end
+                    end
+                end
+            elseif gameLevel == 3 then
+                for x = 1, gridSize do
+                    for y = 1, gridSize do
+                        if grid[x][y].status == "locked" then
+                            grid[x][y].status = "empty"
+                        end
+                    end
+                end
+            end
+    
+            return  -- ✅ 避免显示 Day 弹窗
+        end
+    
+        -- 否则显示普通天数弹窗
+        showDayPopup = true
         popupTimer = 0
+        newDayNumber = day
         popupAlpha = 0
         popupFadeIn = true
-        
-        -- 根据关卡解锁土地
-        if gameLevel == 2 then
-            -- 解锁3x3土地
-            for x = 1, gridSize do
-                for y = 1, gridSize do
-                    if x <= 3 and y <= 3 and grid[x][y].status == "locked" then
-                        grid[x][y].status = "empty"
-                    end
-                end
-            end
-        elseif gameLevel == 3 then
-            -- 解锁全部4x4土地
-            for x = 1, gridSize do
-                for y = 1, gridSize do
-                    if grid[x][y].status == "locked" then
-                        grid[x][y].status = "empty"
-                    end
-                end
-            end
-        end
-    end
-    -- 触发天数弹窗
-    showDayPopup = true
-    popupTimer = 0
-    newDayNumber = day
-    popupAlpha = 0
-    popupFadeIn = true
+    
     
     print("Advanced to Day " .. day .. ", Weather: " .. weather)
 end
 
 function checkLevelUp()
-    -- 如果已经是最高级，不检查
     if gameLevel >= #levelRequirements then return false end
-    
-    local reqCrops, reqCount = levelRequirements[gameLevel][1], levelRequirements[gameLevel][2]
+
+    local reqCrops, reqCount = unpack(levelRequirements[gameLevel])
     local cropNames = {"Cabbage", "Beans", "Maize", "Sweet_Potato"}
-    
-    -- 检查每种作物是否满足要求
+
     for _, crop in ipairs(cropNames) do
         if (player.inventory[crop] or 0) < reqCount then
             return false
@@ -1133,3 +1120,4 @@ function checkLevelUp()
     end
     return true
 end
+
