@@ -392,7 +392,7 @@ function drawControlBar()
     love.graphics.printf("[S] Shop", 200, barY + 15, 150, "left")
     
     -- 仓库按钮
-    love.graphics.printf("[C] Warehouse", 340, barY + 15, 150, "left")
+    love.graphics.printf("[C] Warehouse", 320, barY + 15, 150, "left")
     
     -- 帮助按钮
     love.graphics.printf("[H] Help", 500, barY + 15, 150, "left")
