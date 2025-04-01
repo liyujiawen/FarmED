@@ -671,7 +671,7 @@ function drawWateringMode()
     
     -- 退出提示
     love.graphics.setColor(1, 0.7, 0.7)
-    love.graphics.printf("Press Q to Exit", 0, love.graphics.getHeight() - 100, love.graphics.getWidth(), "center")
+    love.graphics.printf("Press ESC to Exit", 0, love.graphics.getHeight() - 100, love.graphics.getWidth(), "center")
 end
 
 
@@ -730,7 +730,7 @@ function love.keypressed(key)
                 if water >= 7 then water = water - 7 end
             elseif key == "m" or key == "M" then
                 if water >= 9 then water = water - 9 end
-            elseif key == "q" or key == "Q" then
+            elseif key == "escape" then
                 waterMode = false -- 退出浇水模式
                 print("Exited Watering Mode")
             end
