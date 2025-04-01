@@ -1071,12 +1071,7 @@ function love.mousepressed(x, y, button)
                                         end
                                     end
                                 else
-                                    -- 普通收获，显示天数弹窗
-                                    showDayPopup = true
-                                    popupTimer = 0
-                                    newDayNumber = day
-                                    popupAlpha = 0
-                                    popupFadeIn = true
+                                 
                                 end
                             end
                         
