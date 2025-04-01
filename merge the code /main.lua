@@ -34,7 +34,7 @@ function love.load()
         {4, 3},  -- 第二关：4种作物各3个
         {4, 5}   -- 第三关：4种作物各5个
     }
-    showLevelPopup = false  -- 是否显示关卡弹窗
+    
     levelPopupText = ""     -- 关卡弹窗文本
 
     -- 游戏状态变量
@@ -125,6 +125,8 @@ function love.load()
     
     -- 弹窗系统变量
     showDayPopup = false     -- 是否显示天数弹窗
+    showLevelPopup = false  -- 是否显示关卡弹窗
+    showWinPopup = false     -- 是否显示通关弹窗
     popupTimer = 0           -- 弹窗计时器
     popupDuration = 2        -- 弹窗持续时间(秒)
     newDayNumber = 1         -- 要在弹窗中显示的天数
@@ -188,6 +190,24 @@ function love.update(dt)
         end
     end
 
+    -- 处理通关弹窗计时和淡入淡出效果
+    if showWinPopup then
+        popupTimer = popupTimer + dt
+
+        if popupTimer < 0.5 and popupFadeIn then
+            popupAlpha = popupTimer / 0.5
+        elseif popupTimer > popupDuration - 0.5 and not popupFadeIn then
+            popupAlpha = (popupDuration - popupTimer) / 0.5
+        else
+            popupAlpha = 1
+        end
+
+        if popupTimer >= popupDuration and not popupFadeIn then
+            showWinPopup = false
+            popupTimer = 0
+        end
+    end
+
     -- 雨滴动画逻辑（Rainy 天气）
     if weather == "Rainy" and raindrops then
         for _, drop in ipairs(raindrops) do
@@ -232,6 +252,10 @@ function love.draw()
     -- 如果关卡弹窗激活，在最上层绘制
     if showLevelPopup then
     drawLevelPopup()
+    end
+    -- 如果通关弹窗激活，在最上层绘制
+    if showWinPopup then
+        drawWinPopup()
     end
 
 
@@ -577,6 +601,34 @@ function drawLevelPopup()
     love.graphics.printf("Press any key to continue", popupX, popupY + 150, popupWidth, "center")
 end
 
+function drawWinPopup()
+    -- 半透明背景遮罩
+    love.graphics.setColor(0, 0, 0, 0.7 * popupAlpha)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    
+    -- 弹窗框
+    local popupWidth = 500
+    local popupHeight = 250
+    local popupX = (love.graphics.getWidth() - popupWidth) / 2
+    local popupY = (love.graphics.getHeight() - popupHeight) / 2
+    
+    love.graphics.setColor(0.3, 0.5, 0.2, 0.9 * popupAlpha)
+    love.graphics.rectangle("fill", popupX, popupY, popupWidth, popupHeight, 10)
+    love.graphics.setColor(0.8, 1, 0.7, popupAlpha)
+    love.graphics.rectangle("line", popupX, popupY, popupWidth, popupHeight, 10)
+    
+    -- 弹窗内容
+    love.graphics.setFont(font)
+    love.graphics.setColor(1, 1, 1, popupAlpha)
+    love.graphics.printf("CONGRATULATIONS!", popupX, popupY + 40, popupWidth, "center")
+    love.graphics.printf("You have completed all levels!", popupX, popupY + 90, popupWidth, "center")
+    
+    -- 继续提示
+    love.graphics.setFont(tinyFont)
+    love.graphics.setColor(0.9, 0.9, 0.2, math.sin(love.timer.getTime() * 5) * 0.5 + 0.5 * popupAlpha)
+    love.graphics.printf("Press any key to continue", popupX, popupY + 180, popupWidth, "center")
+end
+
 function drawWateringMode()
     love.graphics.setColor(0, 0, 0, 0.7)
     love.graphics.rectangle("fill", 50, 50, love.graphics.getWidth() - 100, love.graphics.getHeight() - 100)
@@ -624,9 +676,6 @@ end
 
 
 function love.keypressed(key)
-
-   
-
         -- 关卡弹窗关闭
         if showLevelPopup and popupTimer > 0.5 then
             showLevelPopup = false
@@ -642,8 +691,14 @@ function love.keypressed(key)
             popupFadeIn = true
             return
         end
-    
-    
+
+        -- 通关弹窗关闭
+        if showWinPopup and popupTimer > 0.5 then
+            showWinPopup = false
+            popupTimer = 0
+            popupFadeIn = true
+            return
+        end
 
     if gameState == "menu" then
         if key == "return" then
@@ -971,42 +1026,60 @@ function love.mousepressed(x, y, button)
                             local cropKey = grid[gridX][gridY].crop
                             local cropName = cropKey:gsub("_seed", "")
                             player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
-
-                            -- 等级判断（收获后检查是否晋级）
-                            if checkLevelUp() then
-                                gameLevel = gameLevel + 1
-                                levelPopupText = "Welcome to Level " .. gameLevel
-                                showLevelPopup = true
+                        
+                            -- 检查是否满足通关条件（所有作物各5个）
+                            local allComplete = true
+                            for _, crop in ipairs({"Cabbage", "Beans", "Maize", "Sweet_Potato"}) do
+                                if (player.inventory[crop] or 0) < 5 then
+                                    allComplete = false
+                                    break
+                                end
+                            end
+                        
+                            if allComplete then
+                                -- 显示通关弹窗
+                                showWinPopup = true
                                 popupTimer = 0
                                 popupAlpha = 0
                                 popupFadeIn = true
                             else
-                                showDayPopup = true
-                                popupTimer = 0
-                                newDayNumber = day
-                                popupAlpha = 0
-                                popupFadeIn = true
-                            end
-
-                            -- 解锁土地逻辑
-                            if gameLevel == 2 then
-                                for x = 1, gridSize do
-                                    for y = 1, gridSize do
-                                        if x <= 3 and y <= 3 and grid[x][y].status == "locked" then
-                                            grid[x][y].status = "empty"
+                                -- 检查是否满足关卡升级条件
+                                if checkLevelUp() then
+                                    gameLevel = gameLevel + 1
+                                    levelPopupText = "Welcome to Level " .. gameLevel
+                                    showLevelPopup = true
+                                    popupTimer = 0
+                                    popupAlpha = 0
+                                    popupFadeIn = true
+                                    
+                                    -- 根据关卡解锁土地
+                                    if gameLevel == 2 then
+                                        for x = 1, gridSize do
+                                            for y = 1, gridSize do
+                                                if x <= 3 and y <= 3 and grid[x][y].status == "locked" then
+                                                    grid[x][y].status = "empty"
+                                                end
+                                            end
+                                        end
+                                    elseif gameLevel == 3 then
+                                        for x = 1, gridSize do
+                                            for y = 1, gridSize do
+                                                if grid[x][y].status == "locked" then
+                                                    grid[x][y].status = "empty"
+                                                end
+                                            end
                                         end
                                     end
-                                end
-                            elseif gameLevel == 3 then
-                                for x = 1, gridSize do
-                                    for y = 1, gridSize do
-                                        if grid[x][y].status == "locked" then
-                                            grid[x][y].status = "empty"
-                                        end
-                                    end
+                                else
+                                    -- 普通收获，显示天数弹窗
+                                    showDayPopup = true
+                                    popupTimer = 0
+                                    newDayNumber = day
+                                    popupAlpha = 0
+                                    popupFadeIn = true
                                 end
                             end
-
+                        
                             -- 清除格子
                             grid[gridX][gridY] = {
                                 status = "empty",
@@ -1017,10 +1090,10 @@ function love.mousepressed(x, y, button)
                                 dailyWateringCount = 0,
                                 wateringProgress = 0
                             }
-
+                        
                             actionPoints = actionPoints - 1
                             print("Harvested:", cropName, "at", gridX, gridY)
-
+                        
                             if actionPoints <= 0 then
                                 advanceToNextDay()
                             end
@@ -1042,7 +1115,6 @@ function love.mousepressed(x, y, button)
         end
     end
 end
-
 
 
 -- 新增函数：推进到下一天的逻辑
@@ -1121,13 +1193,30 @@ function advanceToNextDay()
         popupAlpha = 0
         popupFadeIn = true
     
-    
     print("Advanced to Day " .. day .. ", Weather: " .. weather)
 end
 
 function checkLevelUp()
-    if gameLevel >= #levelRequirements then return false end
+    if gameLevel >= #levelRequirements then 
+        -- 检查是否满足最终通关条件（累计收获）
+        local reqCrops, reqCount = unpack(levelRequirements[#levelRequirements])
+        local cropNames = {"Cabbage", "Beans", "Maize", "Sweet_Potato"}
+        
+        for _, crop in ipairs(cropNames) do
+            if (player.inventory[crop] or 0) < reqCount then
+                return false
+            end
+        end
+        
+        -- 满足最终通关条件
+        showWinPopup = true
+        popupTimer = 0
+        popupAlpha = 0
+        popupFadeIn = true
+        return false -- 不再升级关卡
+    end
 
+    -- 正常关卡升级检查
     local reqCrops, reqCount = unpack(levelRequirements[gameLevel])
     local cropNames = {"Cabbage", "Beans", "Maize", "Sweet_Potato"}
 
@@ -1136,6 +1225,6 @@ function checkLevelUp()
             return false
         end
     end
-    return true
+    
+    return true -- 允许升级到下一关
 end
-
