@@ -170,7 +170,7 @@ function love.update(dt)
         end
     end
 
-    -- ✅ 处理关卡弹窗计时和淡入淡出效果（必须放在外面！）
+    -- 处理关卡弹窗计时和淡入淡出效果
     if showLevelPopup then
         popupTimer = popupTimer + dt
 
@@ -188,7 +188,7 @@ function love.update(dt)
         end
     end
 
-    -- ✅ 雨滴动画逻辑（Rainy 天气）
+    -- 雨滴动画逻辑（Rainy 天气）
     if weather == "Rainy" and raindrops then
         for _, drop in ipairs(raindrops) do
             drop.y = drop.y + drop.speed * dt
@@ -203,7 +203,7 @@ end
 
 
 function love.draw()
-    -- 先绘制背景（保持整个代码中只有这一处修改）
+    -- 先绘制背景
     love.graphics.setColor(1, 1, 1) -- 确保背景图片颜色正确
     love.graphics.draw(gamebackground, 0, 0, 0, 
     love.graphics.getWidth() / gamebackground:getWidth(), 
@@ -635,7 +635,7 @@ function love.keypressed(key)
             return
         end
     
-        -- ✅ 新增：天数弹窗关闭逻辑
+        -- 天数弹窗关闭逻辑
         if showDayPopup and popupTimer > 0.5 then
             showDayPopup = false
             popupTimer = 0
@@ -798,7 +798,7 @@ function processTransaction()
         end
         quantity = 1
     else
-        print("行动点不足，请按N进入下一天！")
+        print("Insufficient action points, please press N to enter the next day!")
     end
 end
 
@@ -810,7 +810,7 @@ function buyItem(item, qty)
         player.kes = player.kes - total
         player.inventory[item.name] = (player.inventory[item.name] or 0) + qty
         actionPoints = actionPoints - 1  -- 扣除1点行动点
-        print("购买成功，剩余行动点:", actionPoints)
+        print("Purchase successful, remaining action points:", actionPoints)
         
         -- 如果行动点用完，自动进入下一天
         if actionPoints <= 0 then
@@ -819,9 +819,9 @@ function buyItem(item, qty)
     else
         -- 提示失败原因
         if actionPoints <= 0 then
-            print("行动点不足！")
+            print("Not enough action points!")
         else
-            print("金钱不足！")
+            print("Not enough money!")
         end
     end
 end
@@ -835,7 +835,7 @@ function sellItem(item, qty)
         player.kes = player.kes + earnings
         player.inventory[item.name] = stock - qty
         actionPoints = actionPoints - 1  -- 扣除1点行动点
-        print("出售成功，剩余行动点:", actionPoints)
+        print("Purchase successful, remaining action points:", actionPoints)
         
         -- 行动点归零时进入下一天
         if actionPoints <= 0 then
@@ -843,9 +843,9 @@ function sellItem(item, qty)
         end
     else
         if actionPoints <= 0 then
-            print("行动点不足！")
+            print("Not enough action points!")
         else
-            print("库存不足！")
+            print("Not enough money!")
         end
     end
 end
