@@ -325,10 +325,10 @@ function drawStatusBar()
 end
 
 function drawGrid()
-    local gridStartX = 300
-    local gridStartY = 207
+    local gridStartX = 250
+    local gridStartY = 245
     local cellSize = 40 
-    local padding = 10 
+    local padding = 35
     local gridSize = 4  
 
     love.graphics.setFont(tinyFont)
@@ -927,10 +927,10 @@ end
 
 function love.mousepressed(x, y, button)
     if gameState == "game" and button == 1 then
-        local gridStartX = 300
-        local gridStartY = 207
+        local gridStartX = 250
+        local gridStartY = 245
         local cellSize = 40
-        local padding = 10
+        local padding = 35
 
         for gridX = 1, gridSize do
             for gridY = 1, gridSize do
