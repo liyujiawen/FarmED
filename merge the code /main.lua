@@ -555,6 +555,9 @@ function drawHelp()
     local startY = 170
     local lineHeight = 30
     
+    -- 添加角色移动控制说明
+    love.graphics.printf("Arrow Keys: Move Character", controlsX, startY, 300, "left")
+
     love.graphics.printf("Q: Select Cabbage Seed(then click land to plant)", controlsX, startY, 300, "left")
     love.graphics.printf("W: Select Beans Seed", controlsX, startY + lineHeight, 300, "left")
     love.graphics.printf("E: Select Maize Seed", controlsX, startY + lineHeight*2, 300, "left")
@@ -566,13 +569,13 @@ function drawHelp()
     love.graphics.printf("ESC: Return/Close Current Screen", controlsX, startY + lineHeight*8, 300, "left")
     
     
-    -- 新增：关卡系统说明
+    -- 关卡系统说明位置需要相应下移
     love.graphics.setFont(tinyFont)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("GAME LEVELS:", controlsX, startY + lineHeight*9, 300, "left")
-    love.graphics.printf("- Level 1: 4 plots, harvest 1 of each crop", controlsX, startY + lineHeight*10, 300, "left")
-    love.graphics.printf("- Level 2: 9 plots, harvest 3 of each crop", controlsX, startY + lineHeight*11, 300, "left")
-    love.graphics.printf("- Level 3: 16 plots, harvest 5 of each crop", controlsX, startY + lineHeight*12, 300, "left")
+    love.graphics.printf("GAME LEVELS:", controlsX, startY + lineHeight*10, 300, "left")
+    love.graphics.printf("- Level 1: 4 plots, harvest 1 of each crop", controlsX, startY + lineHeight*11, 300, "left")
+    love.graphics.printf("- Level 2: 9 plots, harvest 3 of each crop", controlsX, startY + lineHeight*12, 300, "left")
+    love.graphics.printf("- Level 3: 16 plots, harvest 5 of each crop", controlsX, startY + lineHeight*13, 300, "left")
 
     -- 返回游戏提示
     love.graphics.setColor(1, 0.7, 0.7)
