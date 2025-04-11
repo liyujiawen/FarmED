@@ -19,6 +19,23 @@ function love.load()
 
     gamebackground = background
 
+    -- 加载角色图片和属性
+    characterData = {
+        img = love.graphics.newImage("art/character.png"),
+        x = 350,
+        y = 250,
+        speed = 120,
+        width = 64,
+        height = 64,
+        scale = 0.0625,  -- 64/1024 = 0.0625
+        direction = "down",
+        moving = false,
+        minX = 50,
+        maxX = love.graphics.getWidth() - 114,
+        minY = 70,
+        maxY = love.graphics.getHeight() - 130
+    }
+
     -- 设置字体
     font = love.graphics.newFont(30)
     smallFont = love.graphics.newFont(20)
@@ -153,6 +170,40 @@ function love.update(dt)
     -- 计算居中位置（从shop.lua中继承）
     local screenWidth = love.graphics.getWidth()
     buttonArea.x = (screenWidth - buttonArea.width) / 2
+
+    -- Character movement logic - ADD THIS PART
+    if gameState == "game" and not waterMode and not showDayPopup and not showLevelPopup and not showWinPopup then
+        local dx, dy = 0, 0
+        characterData.moving = false
+        
+        -- Check WASD keys
+        if love.keyboard.isDown("w") then
+            dy = -characterData.speed * dt
+            characterData.direction = "up"
+            characterData.moving = true
+        end
+        if love.keyboard.isDown("s") then
+            dy = characterData.speed * dt
+            characterData.direction = "down"
+            characterData.moving = true
+        end
+        if love.keyboard.isDown("a") then
+            dx = -characterData.speed * dt
+            characterData.direction = "left"
+            characterData.moving = true
+        end
+        if love.keyboard.isDown("d") then
+            dx = characterData.speed * dt
+            characterData.direction = "right"
+            characterData.moving = true
+        end
+        
+        -- Apply movement with boundaries
+        if characterData.moving then
+            characterData.x = math.max(characterData.minX, math.min(characterData.x + dx, characterData.maxX))
+            characterData.y = math.max(characterData.minY, math.min(characterData.y + dy, characterData.maxY))
+        end
+    end
 
     -- 处理 Day 弹窗计时和淡入淡出效果
     if showDayPopup then
@@ -298,6 +349,9 @@ function drawGame()
     
     -- 农场网格
     drawGrid()
+
+    -- Draw character
+    drawCharacter()
     
     -- 底部控制栏
     drawControlBar()
@@ -1222,4 +1276,24 @@ function checkLevelUp()
     end
     
     return true -- 允许升级到下一关
+end
+
+-- New function to draw the character
+function drawCharacter()
+    -- Draw the character
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(
+        characterData.img,
+        characterData.x,
+        characterData.y,
+        0,
+        characterData.scale,
+        characterData.scale
+    )
+    
+    -- Debug info (remove in final version)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.setFont(tinyFont)
+    love.graphics.print("Position: " .. math.floor(characterData.x) .. ", " .. math.floor(characterData.y), 10, 80)
+    love.graphics.print("Direction: " .. characterData.direction, 10, 100)
 end
