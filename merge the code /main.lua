@@ -177,22 +177,22 @@ function love.update(dt)
         characterData.moving = false
         
         -- Check WASD keys
-        if love.keyboard.isDown("w") then
+        if love.keyboard.isDown("up") then
             dy = -characterData.speed * dt
             characterData.direction = "up"
             characterData.moving = true
         end
-        if love.keyboard.isDown("s") then
+        if love.keyboard.isDown("down") then
             dy = characterData.speed * dt
             characterData.direction = "down"
             characterData.moving = true
         end
-        if love.keyboard.isDown("a") then
+        if love.keyboard.isDown("left") then
             dx = -characterData.speed * dt
             characterData.direction = "left"
             characterData.moving = true
         end
-        if love.keyboard.isDown("d") then
+        if love.keyboard.isDown("right") then
             dx = characterData.speed * dt
             characterData.direction = "right"
             characterData.moving = true
