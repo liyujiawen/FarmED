@@ -39,12 +39,32 @@ function love.load()
     -- 设置字体
     font = love.graphics.newFont(30)
     smallFont = love.graphics.newFont(20)
-    tinyFont = love.graphics.newFont(15)
+    tinyFont = love.graphics.newFont(10)
     
     -- 初始游戏状态
     gameState = "menu"
     previousGameState = nil  -- 添加记录前一个状态的变量
     gameLevel = 1
+
+    -- 厨房相关变量
+    kitchenIconX = 650  -- 厨房图标X坐标
+    kitchenIconY = 150  -- 厨房图标Y坐标
+    showKitchenPopup = false -- 是否显示厨房弹窗
+    nearKitchen = false -- 是否靠近厨房
+
+    -- 厨房菜单数据
+    kitchenMenu = {
+        dailyMeal = "Vegetable Soup"  -- 今日午餐，默认值
+    }
+
+    -- 简化的菜单
+    possibleMeals = {
+        "Vegetable Soup",   -- 蔬菜汤
+        "Corn Porridge",    -- 玉米粥
+        "Sweet Potato Mash", -- 红薯泥
+        "Cabbage Stew"      -- 包菜炖
+    }
+    
     
     levelRequirements = {
         {4, 1},  -- 第一关：4种作物各1个
@@ -58,6 +78,13 @@ function love.load()
     day = 1
     money = 100
     actionPoints = 20 -- 第一阶段有20个行动点
+    -- 交互提示相关变量
+    interactionTip = ""  -- 当前显示的交互提示
+    showInteractionTip = false  -- 是否显示交互提示
+    nearSeedBar = false  -- 是否靠近种子栏
+    nearPlot = false  -- 是否靠近地块
+    nearPlotX = 0  -- 靠近的地块X坐标
+    nearPlotY = 0  -- 靠近的地块Y坐标
     weather = weatherTypes[math.random(1, #weatherTypes)] -- 随机天气
     
     if weather == "Sunny" then
@@ -204,6 +231,73 @@ function love.update(dt)
             characterData.y = math.max(characterData.minY, math.min(characterData.y + dy, characterData.maxY))
         end
     end
+-- 检查是否靠近种子栏
+    if gameState == "game" and not waterMode and not showDayPopup and not showLevelPopup and not showWinPopup then
+        
+        local inventoryY = love.graphics.getHeight() - 90  -- 种子栏的Y坐标
+        nearSeedBar = (characterData.y > inventoryY - 50 and characterData.y < inventoryY + 30)
+        
+        -- 检查是否靠近地块
+        local gridStartX = 250
+        local gridStartY = 245
+        local cellSize = 40
+        local padding = 35
+        
+        nearPlot = false  -- 重置靠近地块状态
+        
+        for gridX = 1, gridSize do
+            for gridY = 1, gridSize do
+                local cellX = gridStartX + (gridX-1) * (cellSize + padding)
+                local cellY = gridStartY + (gridY-1) * (cellSize + padding)
+                
+                local distance = math.sqrt((characterData.x - (cellX + cellSize/2))^2 + 
+                                          (characterData.y - (cellY + cellSize/2))^2)
+                
+                if distance < 50 then  -- 如果角色距离地块中心小于50像素
+                    nearPlot = true
+                    nearPlotX = gridX
+                    nearPlotY = gridY
+                    break
+                end
+            end
+            if nearPlot then break end
+        end
+        
+        -- 检查是否靠近厨房图标
+        local kitchenDistance = math.sqrt((characterData.x - kitchenIconX)^2 + 
+                                         (characterData.y - kitchenIconY)^2)
+        nearKitchen = (kitchenDistance < 50)
+        
+        -- 更新交互提示
+        if nearKitchen then
+            interactionTip = "Press K to view Kitchen Menu"
+            showInteractionTip = true
+        elseif nearSeedBar then
+            interactionTip = "Press space to pick up seeds"
+            showInteractionTip = true
+        elseif nearPlot then
+            local plot = grid[nearPlotX][nearPlotY]
+            
+            if plot.status == "empty" then
+                interactionTip = "Press the space to plant"
+                showInteractionTip = true
+            elseif plot.status == "planted" then
+                interactionTip = "Press F to water"
+                showInteractionTip = true
+            elseif plot.status == "matured" then
+                interactionTip = "Press space to harvest"
+                showInteractionTip = true
+            elseif plot.status == "locked" then
+                interactionTip = "This lot is unlocked"
+                showInteractionTip = true
+            else
+                showInteractionTip = false
+            end
+        else
+            showInteractionTip = false
+        end
+    end
+
 
     -- 处理 Day 弹窗计时和淡入淡出效果
     if showDayPopup then
@@ -287,6 +381,10 @@ function love.draw()
             drawWateringMode() -- 进入浇水界面
         else
             drawGame()
+            
+            if gameState == "game" and not waterMode and showInteractionTip then
+                drawInteractionTip()
+            end
         end
     elseif gameState == "shop" then
         drawTransactionInterface("SHOP", true)
@@ -294,6 +392,11 @@ function love.draw()
         drawTransactionInterface("WAREHOUSE", false)
     elseif gameState == "help" then
         drawHelp()
+    end
+    
+    -- 在最上层绘制厨房弹窗
+    if showKitchenPopup then
+        drawKitchenPopup()
     end
         
     -- 如果弹窗激活，在最上层绘制弹窗
@@ -309,7 +412,6 @@ function love.draw()
         drawWinPopup()
     end
 
-
     -- 如果是雨天则绘制雨滴
     if gameState == "game" and weather == "Rainy" then
         love.graphics.setColor(1, 1, 1, 0.4)
@@ -323,6 +425,7 @@ function love.draw()
         love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     end  
 end
+
 
 function drawMenu()
     love.graphics.setFont(font)
@@ -352,6 +455,15 @@ function drawGame()
 
     -- Draw character
     drawCharacter()
+
+     -- 绘制厨房图标（简单的方块）
+     love.graphics.setColor(0.9, 0.8, 0.5) -- 淡黄色厨房图标
+     love.graphics.rectangle("fill", kitchenIconX, kitchenIconY, 40, 40)
+     love.graphics.setColor(0.6, 0.5, 0.3) -- 棕色边框
+     love.graphics.rectangle("line", kitchenIconX, kitchenIconY, 40, 40)
+     love.graphics.setFont(tinyFont)
+     love.graphics.setColor(0.3, 0.2, 0.1) -- 深棕色文字
+     love.graphics.printf("Kitchen", kitchenIconX, kitchenIconY + 15, 40, "center")
     
     -- 底部控制栏
     drawControlBar()
@@ -388,8 +500,8 @@ function drawGrid()
     love.graphics.setFont(tinyFont)
     
     -- 绘制统一的提示信息(在格子上方)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Click an empty plot to plant", gridStartX, gridStartY - 35, gridSize * (cellSize + padding), "center")
+    --love.graphics.setColor(1, 1, 1)
+    --love.graphics.printf("Click an empty plot to plant", gridStartX, gridStartY - 35, gridSize * (cellSize + padding), "center")
 
     for x = 1, gridSize do
         for y = 1, gridSize do
@@ -453,6 +565,7 @@ end
 
 
 function drawControlBar()
+    -- 确保barY有值，通过本地定义而不是依赖全局变量
     local barY = love.graphics.getHeight() - 60
     
     -- 控制栏背景
@@ -477,6 +590,38 @@ function drawControlBar()
 
     --浇水
     love.graphics.printf("[T] Enter Watering Mode", 610, barY + 15, 200, "left")
+    
+    -- 种子库存栏
+    local inventoryY = barY - 30
+    love.graphics.setColor(0, 0, 0, 0.6)
+    love.graphics.rectangle("fill", 0, inventoryY, love.graphics.getWidth(), 30)
+    
+    -- 种子图标和数量
+    local seedKeys = {"Cabbage_seed", "Beans_seed", "Maize_seed", "Sweet_Potato_seed"}
+    local seedLabels = {"[Q] Cabbage", "[W] Beans", "[E] Maize", "[R] Sweet Potato"}
+    local startX = 20
+    local iconSpacing = 160
+    
+    for i, key in ipairs(seedKeys) do
+        -- 高亮当前选中的种子
+        if key == selectedSeed then
+            love.graphics.setColor(1, 0.8, 0, 0.6)
+            love.graphics.rectangle("fill", startX + (i-1) * iconSpacing - 5, inventoryY, 150, 30)
+        end
+        
+        -- 显示种子图标
+        if cropImages and cropImages[key] then
+            love.graphics.setColor(1, 1, 1)
+            local iconSize = 20
+            local imgScale = iconSize / cropImages[key]:getWidth()
+            love.graphics.draw(cropImages[key], startX + (i-1) * iconSpacing, inventoryY + 5, 0, imgScale, imgScale)
+        end
+        
+        -- 显示种子名称和数量
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.setFont(tinyFont)
+        love.graphics.print(seedLabels[i] .. ": " .. (player.inventory[key] or 0), startX + (i-1) * iconSpacing + 25, inventoryY + 8)
+    end
 end
 
 -- 从shop.lua继承的交易界面函数
@@ -538,49 +683,70 @@ end
 
 function drawHelp()
     love.graphics.setColor(0, 0, 0, 0.9)
-    love.graphics.rectangle("fill", 50, 50, love.graphics.getWidth() - 100, love.graphics.getHeight() - 60)
+    love.graphics.rectangle("fill", 20, 20, love.graphics.getWidth() - 40, love.graphics.getHeight() - 40)
     
+    -- 标题
     love.graphics.setFont(font)
     love.graphics.setColor(1, 1, 1)
     love.graphics.printf("Game Help", 0, 70, love.graphics.getWidth(), "center")
     
-    -- 添加按键操作说明
+    -- 设置更大的字体
+    local helpFont = love.graphics.newFont(15)  -- 创建一个更大的字体用于帮助文本
+    
+    -- 左右两栏的位置设置
+    local leftColumnX = 120
+    local rightColumnX = love.graphics.getWidth() / 2 + 100
+    local startY = 170
+    local lineHeight = 30  -- 增加行高
+    
+    -- 左侧栏 - 按键控制
     love.graphics.setFont(smallFont)
     love.graphics.setColor(1, 1, 0.8)
-    love.graphics.printf("KEY CONTROLS:", 0, 130, love.graphics.getWidth(), "center")
+    love.graphics.printf("KEY CONTROLS:", leftColumnX - 50, 130, 300, "left")
     
-    love.graphics.setFont(tinyFont)
+    love.graphics.setFont(helpFont)
     love.graphics.setColor(1, 1, 1)
-    local controlsX = love.graphics.getWidth() / 2 - 150
-    local startY = 170
-    local lineHeight = 30
     
-    -- 添加角色移动控制说明
-    love.graphics.printf("Arrow Keys: Move Character", controlsX, startY, 300, "left")
-
-    love.graphics.printf("Q: Select Cabbage Seed(then click land to plant)", controlsX, startY, 300, "left")
-    love.graphics.printf("W: Select Beans Seed", controlsX, startY + lineHeight, 300, "left")
-    love.graphics.printf("E: Select Maize Seed", controlsX, startY + lineHeight*2, 300, "left")
-    love.graphics.printf("R: Select Sweet Potato Seed", controlsX, startY + lineHeight*3, 300, "left")
-    love.graphics.printf("N: Advance to Next Day", controlsX, startY + lineHeight*4, 300, "left")
-    love.graphics.printf("S: Open Shop", controlsX, startY + lineHeight*5, 300, "left")
-    love.graphics.printf("C: Open Warehouse", controlsX, startY + lineHeight*6, 300, "left")
-    love.graphics.printf("H: Help Screen", controlsX, startY + lineHeight*7, 300, "left")
-    love.graphics.printf("ESC: Return/Close Current Screen", controlsX, startY + lineHeight*8, 300, "left")
+    -- 按键控制说明
+    love.graphics.printf("Arrow Keys: Move Character", leftColumnX, startY, 300, "left")
+    love.graphics.printf("Q: Select Cabbage Seed", leftColumnX, startY + lineHeight, 300, "left")
+    love.graphics.printf("W: Select Beans Seed", leftColumnX, startY + lineHeight*2, 300, "left")
+    love.graphics.printf("E: Select Maize Seed", leftColumnX, startY + lineHeight*3, 300, "left")
+    love.graphics.printf("R: Select Sweet Potato Seed", leftColumnX, startY + lineHeight*4, 300, "left")
+    love.graphics.printf("N: Advance to Next Day", leftColumnX, startY + lineHeight*5, 300, "left")
+    love.graphics.printf("S: Open Shop", leftColumnX, startY + lineHeight*6, 300, "left")
+    love.graphics.printf("C: Open Warehouse", leftColumnX, startY + lineHeight*7, 300, "left")
+    love.graphics.printf("H: Help Screen", leftColumnX, startY + lineHeight*8, 300, "left")
+    love.graphics.printf("ESC: Return/Close Screen", leftColumnX, startY + lineHeight*9, 300, "left")
+    love.graphics.printf("SPACE: Plant/Harvest", leftColumnX, startY + lineHeight*10, 300, "left")
+    love.graphics.printf("F: Water Plants", leftColumnX, startY + lineHeight*11, 300, "left")
     
+    -- 右侧栏 - 游戏关卡
+    love.graphics.setFont(smallFont)
+    love.graphics.setColor(1, 1, 0.8)
+    love.graphics.printf("GAME LEVELS:", rightColumnX - 50, 130, 300, "left")
     
-    -- 关卡系统说明位置需要相应下移
-    love.graphics.setFont(tinyFont)
+    love.graphics.setFont(helpFont)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("GAME LEVELS:", controlsX, startY + lineHeight*10, 300, "left")
-    love.graphics.printf("- Level 1: 4 plots, harvest 1 of each crop", controlsX, startY + lineHeight*11, 300, "left")
-    love.graphics.printf("- Level 2: 9 plots, harvest 3 of each crop", controlsX, startY + lineHeight*12, 300, "left")
-    love.graphics.printf("- Level 3: 16 plots, harvest 5 of each crop", controlsX, startY + lineHeight*13, 300, "left")
+    
+    -- 游戏关卡说明
+    love.graphics.printf("Level 1:", rightColumnX, startY, 300, "left")
+    love.graphics.printf("  4 plots, harvest 1 of each crop", rightColumnX, startY + lineHeight, 300, "left")
+    
+    love.graphics.printf("Level 2:", rightColumnX, startY + lineHeight*3, 300, "left")
+    love.graphics.printf("  9 plots, harvest 3 of each crop", rightColumnX, startY + lineHeight*4, 300, "left")
+    
+    love.graphics.printf("Level 3:", rightColumnX, startY + lineHeight*6, 300, "left")
+    love.graphics.printf("  16 plots, harvest 5 of each crop", rightColumnX, startY + lineHeight*7, 300, "left")
+    
+    -- 交互提示说明
+    love.graphics.printf("Interaction Tips:", rightColumnX, startY + lineHeight*9, 300, "left")
+    love.graphics.printf("  Move near plots or seed bar", rightColumnX, startY + lineHeight*10, 300, "left")
+    love.graphics.printf("  for on-screen action hints", rightColumnX, startY + lineHeight*11, 300, "left")
 
     -- 返回游戏提示
     love.graphics.setColor(1, 0.7, 0.7)
     love.graphics.printf("Press ESC to return", 0, love.graphics.getHeight() - 46, love.graphics.getWidth(), "center")
-
 end
 
 function drawDayPopup()
@@ -686,6 +852,55 @@ function drawWinPopup()
     love.graphics.printf("Press any key to continue", popupX, popupY + 180, popupWidth, "center")
 end
 
+function drawKitchenPopup()
+    -- 半透明黑色背景覆盖整个屏幕
+    love.graphics.setColor(0, 0, 0, 0.7)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    
+    -- 厨房弹窗尺寸和位置
+    local popupWidth = 400
+    local popupHeight = 300
+    local popupX = (love.graphics.getWidth() - popupWidth) / 2
+    local popupY = (love.graphics.getHeight() - popupHeight) / 2
+    
+    -- 弹窗背景 - 淡黄色
+    love.graphics.setColor(1, 0.95, 0.7) -- 淡黄色背景
+    love.graphics.rectangle("fill", popupX, popupY, popupWidth, popupHeight, 10)
+    
+    -- 弹窗边框
+    love.graphics.setColor(0.8, 0.7, 0.4) -- 深一点的黄色边框
+    love.graphics.rectangle("line", popupX, popupY, popupWidth, popupHeight, 10)
+    
+    -- 标题背景
+    love.graphics.setColor(0.9, 0.8, 0.5) -- 中等黄色标题背景
+    love.graphics.rectangle("fill", popupX, popupY, popupWidth, 50, 10, 10, 0, 0)
+    
+    -- 标题文字
+    love.graphics.setFont(font)
+    love.graphics.setColor(0.6, 0.5, 0.3) -- 棕色文字
+    love.graphics.printf("Kitchen", popupX, popupY + 10, popupWidth, "center")
+    
+    -- 今日菜单标题
+    love.graphics.setFont(smallFont)
+    love.graphics.setColor(0.6, 0.5, 0.3)
+    love.graphics.printf("Today's Special Meal:", popupX, popupY + 70, popupWidth, "center")
+    
+    -- 菜品名称
+    love.graphics.setFont(font)
+    love.graphics.setColor(0.5, 0.4, 0.2) -- 深棕色文字
+    love.graphics.printf(kitchenMenu.dailyMeal, popupX + 20, popupY + 110, popupWidth - 40, "center")
+    
+    -- 食材需求信息
+    love.graphics.setFont(smallFont)
+    love.graphics.setColor(0.6, 0.5, 0.3)
+    love.graphics.printf("Made with farm-fresh ingredients", popupX, popupY + 180, popupWidth, "center")
+    
+    -- 退出提示
+    love.graphics.setFont(smallFont)
+    love.graphics.setColor(0.7, 0.6, 0.3)
+    love.graphics.printf("Press ESC to close", popupX, popupY + 250, popupWidth, "center")
+end
+
 function drawWateringMode()
     love.graphics.setColor(0, 0, 0, 0.7)
     love.graphics.rectangle("fill", 50, 50, love.graphics.getWidth() - 100, love.graphics.getHeight() - 100)
@@ -757,6 +972,12 @@ function love.keypressed(key)
             return
         end
 
+         -- 厨房弹窗关闭逻辑
+         if showKitchenPopup and key == "escape" then
+            showKitchenPopup = false
+            return
+        end
+
     if gameState == "menu" then
         if key == "return" then
             gameState = "game"
@@ -793,7 +1014,11 @@ function love.keypressed(key)
             end
         else
             -- 非浇水模式下的按键控制
-            if key == "q" then
+            if key == "k" or key == "K" then
+                if nearKitchen then
+                    showKitchenPopup = true
+                end
+            elseif key == "q" then
                 selectedSeed = "Cabbage_seed"
             elseif key == "w" then
                 selectedSeed = "Beans_seed"
@@ -803,7 +1028,7 @@ function love.keypressed(key)
                 selectedSeed = "Sweet_Potato_seed"
             elseif key == "n" or key == "N" then
                 advanceToNextDay()
-
+    
                 -- 随机天气（防止连续重复）
                 local newWeather = weatherTypes[math.random(1, #weatherTypes)]
                 while newWeather == weather do
@@ -833,6 +1058,129 @@ function love.keypressed(key)
                     print("Entered Watering Mode")  -- 调试信息
                 else
                     print("Exited Watering Mode") -- 调试信息
+                end
+            elseif key == "space" then
+                -- 空格键处理
+                if nearSeedBar then
+                    -- 拾取种子逻辑
+                    if actionPoints > 0 then
+                        local availableSeeds = {"Cabbage_seed", "Beans_seed", "Maize_seed", "Sweet_Potato_seed"}
+                        local randomSeed = availableSeeds[math.random(1, #availableSeeds)]
+                        player.inventory[randomSeed] = player.inventory[randomSeed] + 1
+                        actionPoints = actionPoints - 1
+                        print("Picked up a " .. randomSeed)
+                        
+                        if actionPoints <= 0 then
+                            advanceToNextDay()
+                        end
+                    end
+                elseif nearPlot then
+                    -- 地块交互逻辑
+                    local plot = grid[nearPlotX][nearPlotY]
+                    
+                    if plot.status == "empty" then
+                        -- 种植逻辑（类似于鼠标点击地块）
+                        if player.inventory[selectedSeed] and player.inventory[selectedSeed] > 0 and actionPoints > 0 then
+                            grid[nearPlotX][nearPlotY] = {
+                                status = "planted",
+                                crop = selectedSeed,
+                                growth = 0,
+                                waterLevel = 0,
+                                wateringLimit = crops[selectedSeed].dailyWateringLimit,
+                                dailyWateringCount = 0,
+                                wateringProgress = 0
+                            }
+                            player.inventory[selectedSeed] = player.inventory[selectedSeed] - 1
+                            actionPoints = actionPoints - 1
+                            print("Planted:", crops[selectedSeed].name, "at", nearPlotX, nearPlotY)
+                            
+                            if actionPoints <= 0 then
+                                advanceToNextDay()
+                            end
+                        end
+                    elseif plot.status == "matured" then
+                        -- 收获逻辑
+                        if actionPoints > 0 then
+                            local cropKey = plot.crop
+                            local cropName = cropKey:gsub("_seed", "")
+                            player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
+                        
+                            -- 清除格子
+                            grid[nearPlotX][nearPlotY] = {
+                                status = "empty",
+                                crop = nil,
+                                growth = 0,
+                                waterLevel = 0,
+                                wateringLimit = 0,
+                                dailyWateringCount = 0,
+                                wateringProgress = 0
+                            }
+                        
+                            actionPoints = actionPoints - 1
+                            print("Harvested:", cropName, "at", nearPlotX, nearPlotY)
+                        
+                            if actionPoints <= 0 then
+                                advanceToNextDay()
+                            end
+                            
+                            -- 检查是否满足通关条件
+                            checkLevelUp()
+                        end
+                    end
+                end
+            elseif key == "f" or key == "F" then
+                -- F键浇水逻辑
+                if nearPlot and grid[nearPlotX][nearPlotY].status == "planted" then
+                    local plot = grid[nearPlotX][nearPlotY]
+                    local cropData = crops[plot.crop]
+                    
+                    local waterCost = 1
+                    if plot.crop == "Sweet_Potato_seed" then
+                        waterCost = 3
+                    elseif plot.crop == "Beans_seed" then
+                        waterCost = 5
+                    elseif plot.crop == "Cabbage_seed" then
+                        waterCost = 7
+                    elseif plot.crop == "Maize_seed" then
+                        waterCost = 9
+                    end
+                    
+                    if water >= waterCost and actionPoints > 0 and plot.dailyWateringCount < plot.wateringLimit then
+                        plot.waterLevel = plot.waterLevel + 1
+                        plot.wateringProgress = plot.wateringProgress + 1
+                        
+                        if plot.wateringProgress >= cropData.dailyWateringLimit then
+                            plot.growth = plot.growth + 1
+                            plot.wateringProgress = 0
+                            if plot.growth >= cropData.growthTime then
+                                plot.status = "matured"
+                                print(cropData.name .. " matured at grid [" .. nearPlotX .. "," .. nearPlotY .. "]")
+                            end
+                        end
+                        
+                        water = water - waterCost
+                        actionPoints = actionPoints - 1
+                        plot.dailyWateringCount = plot.dailyWateringCount + 1
+                        
+                        print("Watered:", nearPlotX, nearPlotY,
+                            "Water level:", plot.waterLevel,
+                            "/", cropData.waterNeed,
+                            "Daily watering count:", plot.dailyWateringCount,
+                            "/", plot.wateringLimit,
+                            "Cost:", waterCost)
+                        
+                        if actionPoints <= 0 then
+                            advanceToNextDay()
+                        end
+                    else
+                        if plot.dailyWateringCount >= plot.wateringLimit then
+                            print("Daily watering limit reached for this crop!")
+                        elseif water < waterCost then
+                            print("Not enough water!")
+                        else
+                            print("No action points left!")
+                        end
+                    end
                 end
             end
         end
@@ -1176,6 +1524,9 @@ function advanceToNextDay()
     
     day = day + 1
     
+    -- 随机更换今日午餐（新增这一行）
+    kitchenMenu.dailyMeal = possibleMeals[math.random(1, #possibleMeals)]
+    
     -- 重置行动点
     actionPoints = 20
     
@@ -1299,4 +1650,22 @@ function drawCharacter()
     love.graphics.setFont(tinyFont)
     love.graphics.print("Position: " .. math.floor(characterData.x) .. ", " .. math.floor(characterData.y), 10, 80)
     love.graphics.print("Direction: " .. characterData.direction, 10, 100)
+end
+
+function drawInteractionTip()
+    -- 绘制交互提示
+    if showInteractionTip and interactionTip ~= "" then
+        local tipX = characterData.x
+        local tipY = characterData.y - 30
+        
+        -- 提示背景
+        love.graphics.setColor(0, 0, 0, 0.7)
+        local textWidth = tinyFont:getWidth(interactionTip) + 10
+        love.graphics.rectangle("fill", tipX - textWidth/2, tipY - 15, textWidth, 25, 5, 5)
+        
+        -- 提示文字
+        love.graphics.setFont(tinyFont)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf(interactionTip, tipX - textWidth/2, tipY - 10, textWidth, "center")
+    end
 end
