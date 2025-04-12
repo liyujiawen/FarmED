@@ -426,25 +426,25 @@ function love.draw()
         love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     end  
 
-    -- 🌟 画出每颗已种植作物的可浇水范围（半透明圆）
-for gridX = 1, gridSize do
-    for gridY = 1, gridSize do
-        local plot = grid[gridX][gridY]
-        if plot.status == "planted" then
-            local gridStartX = 250
-            local gridStartY = 245
-            local cellSize = 40
-            local padding = 35
+--     -- 🌟 画出每颗已种植作物的可浇水范围（半透明圆）
+-- for gridX = 1, gridSize do
+--     for gridY = 1, gridSize do
+--         local plot = grid[gridX][gridY]
+--         if plot.status == "planted" then
+--             local gridStartX = 250
+--             local gridStartY = 245
+--             local cellSize = 40
+--             local padding = 35
 
-            local centerX = gridStartX + (gridX - 1) * (cellSize + padding) + cellSize / 2
-            local centerY = gridStartY + (gridY - 1) * (cellSize + padding) + cellSize / 2
+--             local centerX = gridStartX + (gridX - 1) * (cellSize + padding) + cellSize / 2
+--             local centerY = gridStartY + (gridY - 1) * (cellSize + padding) + cellSize / 2
 
-            love.graphics.setColor(1, 1, 1, 0.08) -- ✅ 半透明白色（A 越小越透明）
-            love.graphics.circle("fill", centerX, centerY, 30) -- ✅ 30 为你设定的 F 键浇水判定范围
-            love.graphics.setColor(1, 1, 1, 1) -- 恢复颜色以避免影响其他元素
-        end
-    end
-end
+--             love.graphics.setColor(1, 1, 1, 0.08) -- ✅ 半透明白色（A 越小越透明）
+--             love.graphics.circle("fill", centerX, centerY, 30) -- ✅ 30 为你设定的 F 键浇水判定范围
+--             love.graphics.setColor(1, 1, 1, 1) -- 恢复颜色以避免影响其他元素
+--         end
+--     end
+-- end
 
 end
 
