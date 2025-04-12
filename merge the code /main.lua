@@ -1628,7 +1628,6 @@ function drawInteractionTip()
 end
 
 
-
 function getNearestPlantableCellFromPosition(x, y, maxDistance)
 
     local gridStartX = 250
@@ -1642,7 +1641,6 @@ function getNearestPlantableCellFromPosition(x, y, maxDistance)
     local closestDist = math.huge
 
     local closestX, closestY = nil, nil
-
 
 
     for gridX = 1, gridSize do
@@ -1662,7 +1660,6 @@ function getNearestPlantableCellFromPosition(x, y, maxDistance)
                 print(string.format("检查地块[%d,%d]，距离 %.2f", gridX, gridY, dist))
 
 
-
                 if dist < closestDist and dist <= maxDistance then
 
                     closestDist = dist
@@ -1678,8 +1675,6 @@ function getNearestPlantableCellFromPosition(x, y, maxDistance)
         end
 
     end
-
-
 
     return closestX, closestY
 
