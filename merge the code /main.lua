@@ -61,8 +61,8 @@ function love.load()
     possibleMeals = {
         "Vegetable Soup",   -- 蔬菜汤
         "Corn Porridge",    -- 玉米粥
-        "Sweet Potato Mash", -- 红薯泥
-        "Cabbage Stew"      -- 包菜炖
+        "Roasted Sweet Potato",  -- 烤红薯
+        "Bean Stew",        -- 豆子炖菜
     }
     
     
