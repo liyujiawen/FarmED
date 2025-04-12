@@ -61,7 +61,7 @@ function love.load()
     possibleMeals = {
         "Vegetable Soup",   -- 蔬菜汤
         "Corn Porridge",    -- 玉米粥
-        "Roasted Sweet Potato",  -- 烤红薯
+       "Roasted Sweet Potato",  -- 烤红薯
         "Bean Stew",        -- 豆子炖菜
     }
     
@@ -289,7 +289,7 @@ function love.update(dt)
                 interactionTip = "Press space to harvest"
                 showInteractionTip = true
             elseif plot.status == "locked" then
-                interactionTip = "This lot is locked"
+                interactionTip = "This lot is unlocked"
                 showInteractionTip = true
             else
                 showInteractionTip = false
@@ -364,6 +364,11 @@ function love.update(dt)
             end
         end
     end
+    -- ✅ 如果水少于5，自动跳转下一天
+if gameState == "game" and not showDayPopup and not showLevelPopup and not showWinPopup and water < 5 then
+    advanceToNextDay()
+end
+
 end
 
 
@@ -426,25 +431,26 @@ function love.draw()
         love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     end  
 
---     -- 🌟 画出每颗已种植作物的可浇水范围（半透明圆）
--- for gridX = 1, gridSize do
---     for gridY = 1, gridSize do
---         local plot = grid[gridX][gridY]
---         if plot.status == "planted" then
---             local gridStartX = 250
---             local gridStartY = 245
---             local cellSize = 40
---             local padding = 35
+    -- 🌟 画出每颗已种植作物的可浇水范围（半透明圆）
+for gridX = 1, gridSize do
+    for gridY = 1, gridSize do
+        local plot = grid[gridX][gridY]
+        if plot.status == "planted" then
+            local gridStartX = 250
+            local gridStartY = 245
+            local cellSize = 40
+            local padding = 35
 
---             local centerX = gridStartX + (gridX - 1) * (cellSize + padding) + cellSize / 2
---             local centerY = gridStartY + (gridY - 1) * (cellSize + padding) + cellSize / 2
+            local centerX = gridStartX + (gridX - 1) * (cellSize + padding) + cellSize / 2
+            local centerY = gridStartY + (gridY - 1) * (cellSize + padding) + cellSize / 2
 
---             love.graphics.setColor(1, 1, 1, 0.08) -- ✅ 半透明白色（A 越小越透明）
---             love.graphics.circle("fill", centerX, centerY, 30) -- ✅ 30 为你设定的 F 键浇水判定范围
---             love.graphics.setColor(1, 1, 1, 1) -- 恢复颜色以避免影响其他元素
---         end
---     end
--- end
+            love.graphics.setColor(1, 1, 1, 0.08) -- ✅ 半透明白色（A 越小越透明）
+            love.graphics.circle("fill", centerX, centerY, 30) -- ✅ 30 为你设定的 F 键浇水判定范围
+            love.graphics.setColor(1, 1, 1, 1) -- 恢复颜色以避免影响其他元素
+        end
+    end
+end
+
 
 end
 
@@ -969,6 +975,10 @@ function drawWateringMode()
 end
 
 function love.keypressed(key)
+    if waterMode and key == "escape" then
+        waterMode = false
+        return
+    end
     -- 关卡弹窗关闭
     if showLevelPopup and popupTimer > 0.5 then
         showLevelPopup = false
@@ -1628,6 +1638,7 @@ function drawInteractionTip()
 end
 
 
+
 function getNearestPlantableCellFromPosition(x, y, maxDistance)
 
     local gridStartX = 250
@@ -1641,6 +1652,7 @@ function getNearestPlantableCellFromPosition(x, y, maxDistance)
     local closestDist = math.huge
 
     local closestX, closestY = nil, nil
+
 
 
     for gridX = 1, gridSize do
@@ -1660,6 +1672,7 @@ function getNearestPlantableCellFromPosition(x, y, maxDistance)
                 print(string.format("检查地块[%d,%d]，距离 %.2f", gridX, gridY, dist))
 
 
+
                 if dist < closestDist and dist <= maxDistance then
 
                     closestDist = dist
@@ -1675,6 +1688,8 @@ function getNearestPlantableCellFromPosition(x, y, maxDistance)
         end
 
     end
+
+
 
     return closestX, closestY
 
