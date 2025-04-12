@@ -289,7 +289,7 @@ function love.update(dt)
                 interactionTip = "Press space to harvest"
                 showInteractionTip = true
             elseif plot.status == "locked" then
-                interactionTip = "This lot is unlocked"
+                interactionTip = "This lot is locked"
                 showInteractionTip = true
             else
                 showInteractionTip = false
