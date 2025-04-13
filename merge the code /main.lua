@@ -130,6 +130,9 @@ function love.load()
     -- 玩家拥有的种子和资金（从shop.lua中继承）
     player = {
         kes = 10000.00,
+        kes = 10000.00,
+        health = 100,  -- ★ 新增健康值
+        maxHealth = 100,
         inventory = {
             Cabbage_seed = 5,
             Sweet_Potato_seed = 3,
@@ -186,6 +189,26 @@ function love.load()
             speed = math.random(200, 400)
         })
     end
+    -- ▼▼▼ 添加配方数据 ▼▼▼ --
+    recipes = {
+        ["Vegetable Soup"] = {
+            ingredients = { Cabbage = 1 },
+            baseHealth = 20
+        },
+        ["Bean Stew"] = {
+            ingredients = { Beans = 2 },
+            baseHealth = 30
+        },
+        ["Corn Porridge"] = {
+            ingredients = { Maize = 1 },
+            baseHealth = 25
+        },
+        ["Roasted Sweet Potato"] = {
+            ingredients = { Sweet_Potato = 1 },
+            baseHealth = 40
+        }
+    }
+    -- ▲▲▲ 配方数据添加完成 ▲▲▲ --
 
     -- 如果关卡弹窗激活，在最上层绘制
     if showLevelPopup then
@@ -236,7 +259,7 @@ function love.update(dt)
 
         
         local inventoryY = love.graphics.getHeight() - 90  -- 种子栏的Y坐标
-        nearSeedBar = (characterData.y > inventoryY - 50 and characterData.y < inventoryY + 30)
+        nearSeedBar = (characterData.y > inventoryY - 30 and characterData.y < inventoryY + 10)
         
         -- 检查是否靠近地块
         local gridStartX = 250
@@ -516,6 +539,9 @@ function drawStatusBar()
     love.graphics.printf("Action Points: " .. actionPoints .. "/20", itemWidth*2, 15, itemWidth, "center")
     love.graphics.printf("Weather: " .. weather, itemWidth*3, 15, itemWidth, "center")
     love.graphics.printf("Water: " .. water, itemWidth*4, 15, itemWidth, "center")
+    love.graphics.setColor(0.2, 1, 0.2)  -- RGB绿色
+    love.graphics.printf("Health: " .. player.health, 0, 40, itemWidth, "center")  -- X=0对齐Day，Y=40
+    love.graphics.setColor(1, 1, 1)  -- 恢复默认白色
 end
 
 function drawGrid()
@@ -706,7 +732,7 @@ function drawControlPanel(actionText)
 
     -- 数量显示
     love.graphics.printf("QUANTITY: "..quantity, buttonArea.x, 450, buttonArea.width, "center")
-    love.graphics.printf(actionText.."\nESC - Cancel", buttonArea.x, 480, buttonArea.width, "center")
+    love.graphics.printf(actionText.."\nK - Send to Kitchen\nESC - Cancel", buttonArea.x, 480, buttonArea.width, "center")
 end
 
 function drawHelp()
@@ -881,52 +907,93 @@ function drawWinPopup()
 end
 
 function drawKitchenPopup()
-    -- 半透明黑色背景覆盖整个屏幕
-    love.graphics.setColor(0, 0, 0, 0.7)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-    
-    -- 厨房弹窗尺寸和位置
-    local popupWidth = 400
-    local popupHeight = 300
+    -- 弹窗尺寸设置 (600x500)
+    local popupWidth = 600
+    local popupHeight = 500
     local popupX = (love.graphics.getWidth() - popupWidth) / 2
     local popupY = (love.graphics.getHeight() - popupHeight) / 2
-    
-    -- 弹窗背景 - 淡黄色
-    love.graphics.setColor(1, 0.95, 0.7) -- 淡黄色背景
+
+    -- 字体设置（标题/内容/小字）
+    local titleFont = love.graphics.newFont(24)
+    local contentFont = love.graphics.newFont(18)
+    local smallFont = love.graphics.newFont(16)
+
+    -- 绘制黄色背景
+    love.graphics.setColor(1, 0.95, 0.7)
     love.graphics.rectangle("fill", popupX, popupY, popupWidth, popupHeight, 10)
-    
-    -- 弹窗边框
-    love.graphics.setColor(0.8, 0.7, 0.4) -- 深一点的黄色边框
+    love.graphics.setColor(0.6, 0.5, 0.3)
     love.graphics.rectangle("line", popupX, popupY, popupWidth, popupHeight, 10)
-    
-    -- 标题背景
-    love.graphics.setColor(0.9, 0.8, 0.5) -- 中等黄色标题背景
-    love.graphics.rectangle("fill", popupX, popupY, popupWidth, 50, 10, 10, 0, 0)
-    
-    -- 标题文字
-    love.graphics.setFont(font)
-    love.graphics.setColor(0.6, 0.5, 0.3) -- 棕色文字
-    love.graphics.printf("Kitchen", popupX, popupY + 10, popupWidth, "center")
-    
-    -- 今日菜单标题
-    love.graphics.setFont(smallFont)
-    love.graphics.setColor(0.6, 0.5, 0.3)
+
+    -- 主标题
+    love.graphics.setFont(titleFont)
+    love.graphics.setColor(0.3, 0.2, 0.1)
+    love.graphics.printf("KITCHEN", popupX, popupY + 20, popupWidth, "center")
+
+    -- 今日特餐
+    love.graphics.setFont(contentFont)
     love.graphics.printf("Today's Special Meal:", popupX, popupY + 70, popupWidth, "center")
-    
-    -- 菜品名称
-    love.graphics.setFont(font)
-    love.graphics.setColor(0.5, 0.4, 0.2) -- 深棕色文字
-    love.graphics.printf(kitchenMenu.dailyMeal, popupX + 20, popupY + 110, popupWidth - 40, "center")
-    
-    -- 食材需求信息
+    love.graphics.setColor(0.7, 0.3, 0.1)
+    love.graphics.printf(kitchenMenu.dailyMeal, popupX, popupY + 100, popupWidth, "center")
+
+    -- 配方列表
+    love.graphics.setFont(contentFont)
+    local startY = popupY + 150
+    local lineSpacing = 35
+
+    for i, mealName in ipairs(possibleMeals) do
+        local recipe = recipes[mealName]
+        local ingredientsText = ""
+        local canCraft = true
+
+        -- 生成材料需求文本
+        for item, amount in pairs(recipe.ingredients) do
+            ingredientsText = ingredientsText .. item .. " x" .. amount .. "  "
+            if (player.inventory[item] or 0) < amount then
+                canCraft = false
+            end
+        end
+
+        -- 设置文字颜色
+        local textColor = canCraft and {0.2, 0.5, 0.2} or {0.5, 0.5, 0.5}
+        local healthValue = recipe.baseHealth
+
+        -- 当日特餐加成
+        if kitchenMenu.dailyMeal == mealName then
+            healthValue = healthValue * 1.2
+        end
+
+        -- 左列：配方编号和名称
+        love.graphics.setColor(textColor)
+        love.graphics.printf(i .. ". " .. mealName, popupX + 30, startY, 300, "left")
+
+        -- 右列：材料需求和恢复值
+        love.graphics.printf(ingredientsText .. "+" .. math.floor(healthValue) .. " HP", 
+            popupX + 300, startY, 250, "right")
+
+        startY = startY + lineSpacing
+    end
+
+    -- 库存显示
     love.graphics.setFont(smallFont)
-    love.graphics.setColor(0.6, 0.5, 0.3)
-    love.graphics.printf("Made with farm-fresh ingredients", popupX, popupY + 180, popupWidth, "center")
+    love.graphics.setColor(0.3, 0.3, 0.3)
+    love.graphics.printf("Inventory:", popupX + 30, popupY + 370, popupWidth, "left")
     
-    -- 退出提示
+    love.graphics.printf(
+    "Raw: Cabbage("..(player.inventory.Cabbage_seed or 0)..") Beans("..(player.inventory.Beans_seed or 0)..")\n"..
+    "Food: Cabbage("..(player.inventory.Cabbage or 0)..") Beans("..(player.inventory.Beans or 0)..")",
+    popupX + 30, popupY + 400, popupWidth - 60, "left"
+)
+
+    -- 健康值显示
+    love.graphics.setFont(contentFont)
+    love.graphics.setColor(0.8, 0.2, 0.2)
+    love.graphics.printf("HEALTH: " .. player.health .. "/" .. player.maxHealth, 
+        popupX, popupY + 440, popupWidth, "center")
+
+    -- 关闭提示
     love.graphics.setFont(smallFont)
-    love.graphics.setColor(0.7, 0.6, 0.3)
-    love.graphics.printf("Press ESC to close", popupX, popupY + 250, popupWidth, "center")
+    love.graphics.setColor(0.4, 0.3, 0.2)
+    love.graphics.printf("Press ESC to close", popupX, popupY + 470, popupWidth, "center")
 end
 
 function drawWateringMode()
@@ -1008,6 +1075,43 @@ function love.keypressed(key)
         showKitchenPopup = false
         return
     end
+        -- ▼▼▼ 新增食物制作逻辑 ▼▼▼ --
+        if showKitchenPopup then
+            if key >= "1" and key <= "4" then
+                local index = tonumber(key)
+                local mealName = possibleMeals[index]
+                if mealName and recipes[mealName] then
+                    local recipe = recipes[mealName]
+                    local canCraft = true
+                    
+                    -- 检查材料
+                    for item, amount in pairs(recipe.ingredients) do
+                        if (player.inventory[item] or 0) < amount then
+                            canCraft = false
+                            break
+                        end
+                    end
+                    
+                    if canCraft then
+                        -- 扣除材料
+                        for item, amount in pairs(recipe.ingredients) do
+                            player.inventory[item] = player.inventory[item] - amount
+                        end
+                        -- ▼▼▼ 计算恢复值并更新健康 ▼▼▼ --
+                        local healthGain = recipe.baseHealth
+                        if kitchenMenu.dailyMeal == mealName then
+                            healthGain = math.floor(healthGain * 1.2)
+                        end
+                        -- 添加健康上限限制
+                        player.health = math.min(player.maxHealth, player.health + healthGain)
+                    else
+                        print("Not enough ingredients!")
+                    end
+                end
+            end
+            return  -- 阻止其他按键处理
+        end
+        -- ▲▲▲ 逻辑结束 ▲▲▲ --
 
     if gameState == "menu" then
         if key == "return" then
@@ -1207,6 +1311,10 @@ function handleNavigation(key)
         selectedItem = math.min(#items, selectedItem+1)
     elseif (key == "b" and gameState == "shop") or (key == "s" and gameState == "warehouse") then
         processTransaction()
+    elseif key == "k" and gameState == "warehouse" then
+        local item = filterItems(false)[selectedItem]
+        sendToKitchen(item, quantity)
+        quantity = 1    
     end
 end
 
@@ -1486,14 +1594,32 @@ end
 function advanceToNextDay()
     -- 保存当前天数（用于弹窗显示）
     local oldDay = day
-    
     day = day + 1
+    -- ▼▼▼ 每日健康减少 ▼▼▼ --
+    player.health = math.max(0, player.health - 5)  -- 每天减少5点健康值
     
-    -- 随机更换今日午餐（新增这一行）
+        -- ▼▼▼ 修改特餐设置 ▼▼▼ --
+    -- 随机选择当日特餐
     kitchenMenu.dailyMeal = possibleMeals[math.random(1, #possibleMeals)]
+    -- 重置所有配方加成
+    for _, recipe in pairs(recipes) do
+        recipe.health = recipe.baseHealth  -- 清除之前的加成
+    end
+    -- 设置当日特餐加成
+    if recipes[kitchenMenu.dailyMeal] then
+        recipes[kitchenMenu.dailyMeal].health = recipes[kitchenMenu.dailyMeal].baseHealth * 1.2
+    end
+    -- ▲▲▲ 修改结束 ▲▲▲ --
     
     -- 重置行动点
     actionPoints = 20
+    -- ▼▼▼ 根据健康值调整行动点 ▼▼▼ --
+    if player.health <= 30 then
+        actionPoints = 10  -- 健康值过低时行动点上限为10
+        player.maxHealth = 100  -- 重置最大健康值（防止修改）
+    else
+        actionPoints = 20  -- 正常行动点
+    end
     
     -- 随机天气
     local newWeather = weatherTypes[math.random(1, #weatherTypes)]
@@ -1637,7 +1763,23 @@ function drawInteractionTip()
     end
 end
 
-
+-- ▼▼▼ 新增送厨房函数 ▼▼▼ --
+function sendToKitchen(item, qty)
+    local cropName = item.name:gsub("_seed", "")
+    if player.inventory[item.name] and player.inventory[item.name] >= qty then
+        -- 转换比例：2个作物 = 1个食物
+        local conversionRate = 2
+        local converted = math.floor(qty / conversionRate)
+        
+        if converted > 0 then
+            player.inventory[item.name] = player.inventory[item.name] - converted*conversionRate
+            player.inventory[cropName] = (player.inventory[cropName] or 0) + converted
+            print("Converted "..(converted*conversionRate).." "..item.name.." to "..converted.." "..cropName)
+        end
+    else
+        print("Not enough "..item.name.." to convert!")
+    end
+end
 
 function getNearestPlantableCellFromPosition(x, y, maxDistance)
 
