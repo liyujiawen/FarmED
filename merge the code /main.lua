@@ -130,8 +130,7 @@ function love.load()
     -- 玩家拥有的种子和资金（从shop.lua中继承）
     player = {
         kes = 10000.00,
-        kes = 10000.00,
-        health = 100,  --  新增健康值
+        health = 100,
         maxHealth = 100,
         inventory = {
             Cabbage_seed = 5,
@@ -388,12 +387,11 @@ function love.update(dt)
         end
     end
     --  如果水少于5，自动跳转下一天
-if gameState == "game" and not showDayPopup and not showLevelPopup and not showWinPopup and water < 5 then
-    advanceToNextDay()
-end
+    if gameState == "game" and not showDayPopup and not showLevelPopup and not showWinPopup and water < 5 then
+        advanceToNextDay()
+    end
 
 end
-
 
 
 function love.draw()
@@ -453,8 +451,6 @@ function love.draw()
         love.graphics.setColor(0, 0, 0, 0.4)  -- 半透明黑色遮罩
         love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     end 
-
-
 end
 
 
@@ -712,7 +708,7 @@ function drawControlPanel(actionText)
 
     -- 数量显示
     love.graphics.printf("QUANTITY: "..quantity, buttonArea.x, 450, buttonArea.width, "center")
-    love.graphics.printf(actionText.."\nK - Send to Kitchen\nESC - Cancel", buttonArea.x, 480, buttonArea.width, "center")
+    love.graphics.printf(actionText.."\nESC - Cancel", buttonArea.x, 480, buttonArea.width, "center")
 end
 
 function drawHelp()
@@ -1049,13 +1045,12 @@ function drawKitchenPopup()
     end
 
     -- 库存显示
-    love.graphics.setFont(smallFont)
-    love.graphics.setColor(0.3, 0.3, 0.3)
-    love.graphics.printf("Inventory:", popupX + 30, popupY + 370, popupWidth, "left")
-    
     love.graphics.printf(
-    "Raw: Cabbage("..(player.inventory.Cabbage_seed or 0)..") Beans("..(player.inventory.Beans_seed or 0)..")\n"..
-    "Food: Cabbage("..(player.inventory.Cabbage or 0)..") Beans("..(player.inventory.Beans or 0)..")",
+    "Food Inventory:\n"..
+    "Cabbage: " .. (player.inventory.Cabbage or 0) .. "  " ..
+    "Sweet Potato: " .. (player.inventory.Sweet_Potato or 0) .. "  " ..
+    "Maize: " .. (player.inventory.Maize or 0) .. "  " ..
+    "Beans: " .. (player.inventory.Beans or 0),
     popupX + 30, popupY + 400, popupWidth - 60, "left"
 )
 
@@ -1086,10 +1081,10 @@ function drawWateringMode()
     love.graphics.setFont(smallFont)
     local startY = 180
     local spacing = 40
-    love.graphics.printf("S: SweetPotatos (-3 Water)", 0, startY, love.graphics.getWidth(), "center")
-    love.graphics.printf("B: Beans (-5 Water)", 0, startY + spacing, love.graphics.getWidth(), "center")
-    love.graphics.printf("C: Cabbage (-7 Water)", 0, startY + spacing * 2, love.graphics.getWidth(), "center")
-    love.graphics.printf("M: Maize (-9 Water)", 0, startY + spacing * 3, love.graphics.getWidth(), "center")
+    love.graphics.printf("SweetPotatos (-3 Water)", 0, startY, love.graphics.getWidth(), "center")
+    love.graphics.printf("Beans (-5 Water)", 0, startY + spacing, love.graphics.getWidth(), "center")
+    love.graphics.printf("Cabbage (-7 Water)", 0, startY + spacing * 2, love.graphics.getWidth(), "center")
+    love.graphics.printf("Maize (-9 Water)", 0, startY + spacing * 3, love.graphics.getWidth(), "center")
 
     -- **水条参数**
     local barWidth = 300 -- 水条的最大宽度
@@ -1150,7 +1145,7 @@ function love.keypressed(key)
         showKitchenPopup = false
         return
     end
-        -- ▼▼▼ 新增食物制作逻辑 ▼▼▼ --
+        -- 新增食物制作逻辑 --
         if showKitchenPopup then
             if key >= "1" and key <= "4" then
                 local index = tonumber(key)
@@ -1170,9 +1165,16 @@ function love.keypressed(key)
                     if canCraft then
                         -- 扣除材料
                         for item, amount in pairs(recipe.ingredients) do
+                            if (player.inventory[item] or 0) < amount then
+                                canCraft = false
+                                break
+                            end
+                        end
+                        -- 消耗食材
+                        for item, amount in pairs(recipe.ingredients) do
                             player.inventory[item] = player.inventory[item] - amount
                         end
-                        -- ▼▼▼ 计算恢复值并更新健康 ▼▼▼ --
+                        -- 计算恢复值并更新健康--
                         local healthGain = recipe.baseHealth
                         if kitchenMenu.dailyMeal == mealName then
                             healthGain = math.floor(healthGain * 1.2)
@@ -1186,7 +1188,7 @@ function love.keypressed(key)
             end
             return  -- 阻止其他按键处理
         end
-        -- ▲▲▲ 逻辑结束 ▲▲▲ --
+        -- 逻辑结束 --
 
     if gameState == "menu" then
         if key == "return" then
@@ -1203,7 +1205,7 @@ function love.keypressed(key)
         end
 
     elseif gameState == "game" then
-        -- 👇直接处理 F 键浇水，不再需要 waterMode
+        -- 直接处理 F 键浇水，不再需要 waterMode
         if key == "f" or key == "F" then
             if nearPlot then
                 local plot = grid[nearPlotX][nearPlotY]
@@ -1375,23 +1377,64 @@ function love.keypressed(key)
     print("Current gameState: " .. gameState)
 end
 
-
-
-
 function handleNavigation(key)
-    local items = filterItems(gameState == "shop")
+    local items = filterItems(gameState == "shop") -- 获取当前商品列表（商店或仓库）
+    
+    -- 上下键选择商品
     if key == "up" then
-        selectedItem = math.max(1, selectedItem-1)
+        selectedItem = math.max(1, selectedItem - 1)
     elseif key == "down" then
-        selectedItem = math.min(#items, selectedItem+1)
+        selectedItem = math.min(#items, selectedItem + 1)
+    
+    -- 商店购买/仓库出售
     elseif (key == "b" and gameState == "shop") or (key == "s" and gameState == "warehouse") then
         processTransaction()
-    elseif key == "k" and gameState == "warehouse" then
-        local item = filterItems(false)[selectedItem]
-        sendToKitchen(item, quantity)
-        quantity = 1    
     end
 end
+    
+    -- 仓库发送到厨房（K键）
+    -- elseif (key == "k" or key == "K") and gameState == "warehouse" then
+    --     if #items > 0 and items[selectedItem] then
+    --         local item = items[selectedItem]
+            
+    --         -- 调试信息：打印当前选择的物品和数量
+    --         print("[DEBUG] Attempting to send to kitchen:")
+    --         print("Selected item:", item.name)
+    --         print("Quantity:", quantity)
+    --         print("Warehouse stock:", player.inventory.warehouse[item.name] or 0)
+            
+    --         -- 检查仓库库存是否足够
+    --         if player.inventory.warehouse[item.name] and player.inventory.warehouse[item.name] >= quantity then
+    --             -- 确保厨房库存存在该物品
+    --             if not player.inventory.kitchen[item.name] then
+    --                 player.inventory.kitchen[item.name] = 0
+    --             end
+                
+    --             -- 执行转移
+    --             player.inventory.warehouse[item.name] = player.inventory.warehouse[item.name] - quantity
+    --             player.inventory.kitchen[item.name] = player.inventory.kitchen[item.name] + quantity
+                
+    --             -- 调试信息：打印转移结果
+    --             print("Successfully sent", quantity, item.name, "to kitchen!")
+    --             print("Warehouse after:", player.inventory.warehouse[item.name])
+    --             print("Kitchen after:", player.inventory.kitchen[item.name])
+                
+    --             quantity = 1 -- 重置选择数量
+    --         else
+    --             print("Error: Not enough "..item.name.." in warehouse! (Available: "..(player.inventory.warehouse[item.name] or 0)..", Needed: "..quantity..")")
+    --         end
+    --     else
+    --         print("Error: No item selected or warehouse is empty!")
+    --     end
+    
+    -- 数量调整按钮（+-）
+--     elseif key == "left" then
+--         quantity = math.max(1, quantity - 1) -- 左键减1
+--     elseif key == "right" then
+--         quantity = quantity + 1 -- 右键加1
+--     end
+-- end
+
 
 -- 从shop.lua继承的交易处理函数
 function processTransaction()
@@ -1519,8 +1562,7 @@ function love.mousepressed(x, y, button)
                         elseif grid[gridX][gridY].status == "matured" and actionPoints > 0 then
                             local cropKey = grid[gridX][gridY].crop
                             local cropName = cropKey:gsub("_seed", "")
-                            player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
-                        
+                            player.inventory[cropName] = (player.inventory[cropName] or 0) + 1  -- 直接存入作物
                             -- 检查是否满足通关条件（所有作物各5个）
                             local allComplete = true
                             for _, crop in ipairs({"Cabbage", "Beans", "Maize", "Sweet_Potato"}) do
@@ -1780,75 +1822,59 @@ function drawInteractionTip()
 end
 
 -- 新增送厨房  --
-function sendToKitchen(item, qty)
-    local cropName = item.name:gsub("_seed", "")
-    if player.inventory[item.name] and player.inventory[item.name] >= qty then
-        -- 转换比例：2个作物 = 1个食物
-        local conversionRate = 2
-        local converted = math.floor(qty / conversionRate)
+-- function sendToKitchen(item, qty)
+--     -- 确保 item.name 是 "Cabbage" 而不是 "Cabbage_seed"
+--     local cropName = item.name
+    
+--     -- 调试信息：打印当前仓库和厨房库存
+--     print("[DEBUG] Attempting to send to kitchen:")
+--     print("Crop:", cropName)
+--     print("Warehouse before:", player.inventory.warehouse[cropName] or 0)
+--     print("Kitchen before:", player.inventory.kitchen[cropName] or 0)
+    
+--     -- 检查仓库是否有足够库存
+--     if player.inventory.warehouse[cropName] and player.inventory.warehouse[cropName] >= qty then
+--         -- 从仓库扣除
+--         player.inventory.warehouse[cropName] = player.inventory.warehouse[cropName] - qty
         
-        if converted > 0 then
-            player.inventory[item.name] = player.inventory[item.name] - converted*conversionRate
-            player.inventory[cropName] = (player.inventory[cropName] or 0) + converted
-            print("Converted "..(converted*conversionRate).." "..item.name.." to "..converted.." "..cropName)
-        end
-    else
-        print("Not enough "..item.name.." to convert!")
-    end
-end
+--         -- 确保 kitchen 存在该作物，并增加数量
+--         player.inventory.kitchen[cropName] = (player.inventory.kitchen[cropName] or 0) + qty
+        
+--         -- 调试信息：打印转移后的库存
+--         print("Warehouse after:", player.inventory.warehouse[cropName] or 0)
+--         print("Kitchen after:", player.inventory.kitchen[cropName] or 0)
+--         print("Successfully sent", qty, cropName, "to kitchen!")
+--     else
+--         print("Error: Not enough", cropName, "in warehouse! (Available:", player.inventory.warehouse[cropName] or 0, "Needed:", qty, ")")
+--     end
+-- end
 
 function getNearestPlantableCellFromPosition(x, y, maxDistance)
-
     local gridStartX = 250
-
     local gridStartY = 245
-
     local cellSize = 40
-
     local padding = 35
-
     local closestDist = math.huge
-
     local closestX, closestY = nil, nil
 
-
-
     for gridX = 1, gridSize do
-
         for gridY = 1, gridSize do
-
             local plot = grid[gridX][gridY]
 
             if plot.status == "planted" then
-
                 local centerX = gridStartX + (gridX - 1) * (cellSize + padding) + cellSize / 2
-
                 local centerY = gridStartY + (gridY - 1) * (cellSize + padding) + cellSize / 2
-
                 local dist = math.sqrt((x - centerX)^2 + (y - centerY)^2)
-
-                print(string.format("检查地块[%d,%d]，距离 %.2f", gridX, gridY, dist))
-
-
+                print(string.format("Check the plot[%d,%d]，distance %.2f", gridX, gridY, dist))
 
                 if dist < closestDist and dist <= maxDistance then
-
                     closestDist = dist
-
                     closestX = gridX
-
                     closestY = gridY
-
                 end
-
             end
-
         end
-
     end
 
-
-
     return closestX, closestY
-
 end
