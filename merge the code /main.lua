@@ -131,7 +131,7 @@ function love.load()
     player = {
         kes = 10000.00,
         kes = 10000.00,
-        health = 100,  -- ★ 新增健康值
+        health = 100,  --  新增健康值
         maxHealth = 100,
         inventory = {
             Cabbage_seed = 5,
@@ -189,7 +189,7 @@ function love.load()
             speed = math.random(200, 400)
         })
     end
-    -- ▼▼▼ 添加配方数据 ▼▼▼ --
+    --  添加配方数据  --
     recipes = {
         ["Vegetable Soup"] = {
             ingredients = { Cabbage = 1 },
@@ -208,7 +208,7 @@ function love.load()
             baseHealth = 40
         }
     }
-    -- ▲▲▲ 配方数据添加完成 ▲▲▲ --
+    --  配方数据添加完成 --
 
     -- 如果关卡弹窗激活，在最上层绘制
     if showLevelPopup then
@@ -387,7 +387,7 @@ function love.update(dt)
             end
         end
     end
-    -- ✅ 如果水少于5，自动跳转下一天
+    --  如果水少于5，自动跳转下一天
 if gameState == "game" and not showDayPopup and not showLevelPopup and not showWinPopup and water < 5 then
     advanceToNextDay()
 end
@@ -452,27 +452,7 @@ function love.draw()
     if gameState == "game" and weather == "Rainy" then
         love.graphics.setColor(0, 0, 0, 0.4)  -- 半透明黑色遮罩
         love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-    end  
-
-    -- 🌟 画出每颗已种植作物的可浇水范围（半透明圆）
-for gridX = 1, gridSize do
-    for gridY = 1, gridSize do
-        local plot = grid[gridX][gridY]
-        if plot.status == "planted" then
-            local gridStartX = 250
-            local gridStartY = 245
-            local cellSize = 40
-            local padding = 35
-
-            local centerX = gridStartX + (gridX - 1) * (cellSize + padding) + cellSize / 2
-            local centerY = gridStartY + (gridY - 1) * (cellSize + padding) + cellSize / 2
-
-            love.graphics.setColor(1, 1, 1, 0.08) -- ✅ 半透明白色（A 越小越透明）
-            love.graphics.circle("fill", centerX, centerY, 30) -- ✅ 30 为你设定的 F 键浇水判定范围
-            love.graphics.setColor(1, 1, 1, 1) -- 恢复颜色以避免影响其他元素
-        end
-    end
-end
+    end 
 
 
 end
@@ -736,71 +716,166 @@ function drawControlPanel(actionText)
 end
 
 function drawHelp()
+    -- 创建深色半透明背景
     love.graphics.setColor(0, 0, 0, 0.9)
-    love.graphics.rectangle("fill", 20, 20, love.graphics.getWidth() - 40, love.graphics.getHeight() - 40)
+    love.graphics.rectangle("fill", 20, 20, love.graphics.getWidth() - 40, love.graphics.getHeight() - 40, 10)
     
     -- 标题
-    love.graphics.setFont(font)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Game Help", 0, 70, love.graphics.getWidth(), "center")
-    
-    -- 设置更大的字体
-    local helpFont = love.graphics.newFont(15)  -- 创建一个更大的字体用于帮助文本
-    
-    -- 左右两栏的位置设置
-    local leftColumnX = 120
-    local rightColumnX = love.graphics.getWidth() / 2 + 100
-    local startY = 170
-    local lineHeight = 30  -- 增加行高
-    
-    -- 左侧栏 - 按键控制
-    love.graphics.setFont(smallFont)
+    love.graphics.setFont(font) -- 使用现有的主字体
     love.graphics.setColor(1, 1, 0.8)
-    love.graphics.printf("KEY CONTROLS:", leftColumnX - 50, 130, 300, "left")
+    love.graphics.printf("FarmED - Game Guide", 0, 40, love.graphics.getWidth(), "center")
     
-    love.graphics.setFont(helpFont)
+    -- 定义字体大小
+    local headerFont = love.graphics.newFont(18) -- 标题字体
+    local contentFont = love.graphics.newFont(14) -- 内容字体
+    
+    -- 屏幕尺寸和布局常量
+    local screenWidth = love.graphics.getWidth()
+    local screenHeight = love.graphics.getHeight()
+    local leftX = 60
+    local centerX = 300
+    local rightX = 550
+    local startY = 90
+    local lineHeight = 30
+    local sectionSpace = 10
+    
+    -- ===== 左侧区域：如何游戏 =====
+    love.graphics.setFont(headerFont)
+    love.graphics.setColor(1, 1, 0.3)
+    love.graphics.printf("How to Play", leftX, startY, 220, "left")
+    
+    love.graphics.setFont(contentFont)
     love.graphics.setColor(1, 1, 1)
+    local howToPlayY = startY + 25
+    love.graphics.printf("1. Plant seeds in empty plots", leftX, howToPlayY, 220, "left")
+    love.graphics.printf("2. Water your plants daily", leftX, howToPlayY + lineHeight, 220, "left")
+    love.graphics.printf("3. Harvest mature crops", leftX, howToPlayY + lineHeight*2, 220, "left")
+    love.graphics.printf("4. Sell crops at the warehouse", leftX, howToPlayY + lineHeight*3, 220, "left")
+    love.graphics.printf("5. Buy new seeds at the shop", leftX, howToPlayY + lineHeight*4, 220, "left")
+    love.graphics.printf("6. Cook meals in the kitchen", leftX, howToPlayY + lineHeight*5, 220, "left")
     
-    -- 按键控制说明
-    love.graphics.printf("Arrow Keys: Move Character", leftColumnX, startY, 300, "left")
-    love.graphics.printf("Q: Select Cabbage Seed", leftColumnX, startY + lineHeight, 300, "left")
-    love.graphics.printf("W: Select Beans Seed", leftColumnX, startY + lineHeight*2, 300, "left")
-    love.graphics.printf("E: Select Maize Seed", leftColumnX, startY + lineHeight*3, 300, "left")
-    love.graphics.printf("R: Select Sweet Potato Seed", leftColumnX, startY + lineHeight*4, 300, "left")
-    love.graphics.printf("N: Advance to Next Day", leftColumnX, startY + lineHeight*5, 300, "left")
-    love.graphics.printf("S: Open Shop", leftColumnX, startY + lineHeight*6, 300, "left")
-    love.graphics.printf("C: Open Warehouse", leftColumnX, startY + lineHeight*7, 300, "left")
-    love.graphics.printf("H: Help Screen", leftColumnX, startY + lineHeight*8, 300, "left")
-    love.graphics.printf("ESC: Return/Close Screen", leftColumnX, startY + lineHeight*9, 300, "left")
-    love.graphics.printf("SPACE: Plant/Harvest", leftColumnX, startY + lineHeight*10, 300, "left")
-    love.graphics.printf("F: Water Plants", leftColumnX, startY + lineHeight*11, 300, "left")
+    -- ===== 左侧区域：基本控制 =====
+    love.graphics.setFont(headerFont)
+    love.graphics.setColor(1, 1, 0.3)
+    love.graphics.printf("Basic Controls", leftX, howToPlayY + lineHeight*6 + sectionSpace, 220, "left")
     
-    -- 右侧栏 - 游戏关卡
-    love.graphics.setFont(smallFont)
-    love.graphics.setColor(1, 1, 0.8)
-    love.graphics.printf("GAME LEVELS:", rightColumnX - 50, 130, 300, "left")
-    
-    love.graphics.setFont(helpFont)
+    love.graphics.setFont(contentFont)
     love.graphics.setColor(1, 1, 1)
+    local controlsY = howToPlayY + lineHeight*7 + sectionSpace
     
-    -- 游戏关卡说明
-    love.graphics.printf("Level 1:", rightColumnX, startY, 300, "left")
-    love.graphics.printf("  4 plots, harvest 1 of each crop", rightColumnX, startY + lineHeight, 300, "left")
+    love.graphics.printf("Movement:", leftX, controlsY, 110, "left")
+    love.graphics.printf("Arrow Keys", leftX + 110, controlsY, 110, "left")
     
-    love.graphics.printf("Level 2:", rightColumnX, startY + lineHeight*3, 300, "left")
-    love.graphics.printf("  9 plots, harvest 3 of each crop", rightColumnX, startY + lineHeight*4, 300, "left")
+    love.graphics.printf("Plant/Harvest:", leftX, controlsY + lineHeight, 110, "left")
+    love.graphics.printf("SPACE", leftX + 110, controlsY + lineHeight, 110, "left")
     
-    love.graphics.printf("Level 3:", rightColumnX, startY + lineHeight*6, 300, "left")
-    love.graphics.printf("  16 plots, harvest 5 of each crop", rightColumnX, startY + lineHeight*7, 300, "left")
+    love.graphics.printf("Water Plant:", leftX, controlsY + lineHeight*2, 110, "left")
+    love.graphics.printf("F", leftX + 110, controlsY + lineHeight*2, 110, "left")
     
-    -- 交互提示说明
-    love.graphics.printf("Interaction Tips:", rightColumnX, startY + lineHeight*9, 300, "left")
-    love.graphics.printf("  Move near plots or seed bar", rightColumnX, startY + lineHeight*10, 300, "left")
-    love.graphics.printf("  for on-screen action hints", rightColumnX, startY + lineHeight*11, 300, "left")
-
+    love.graphics.printf("Next Day:", leftX, controlsY + lineHeight*3, 110, "left")
+    love.graphics.printf("N", leftX + 110, controlsY + lineHeight*3, 110, "left")
+    
+    love.graphics.printf("Kitchen Menu:", leftX, controlsY + lineHeight*4, 110, "left")
+    love.graphics.printf("K", leftX + 110, controlsY + lineHeight*4, 110, "left")
+    
+    -- ===== 中间区域：界面控制 =====
+    love.graphics.setFont(headerFont)
+    love.graphics.setColor(1, 1, 0.3)
+    love.graphics.printf("Interface Controls", centerX, startY, 220, "left")
+    
+    love.graphics.setFont(contentFont)
+    love.graphics.setColor(1, 1, 1)
+    local moreControlsY = startY + 25
+    
+    love.graphics.printf("Shop:", centerX, moreControlsY, 110, "left") 
+    love.graphics.printf("S", centerX + 110, moreControlsY, 110, "left")
+    
+    love.graphics.printf("Warehouse:", centerX, moreControlsY + lineHeight, 110, "left")
+    love.graphics.printf("C", centerX + 110, moreControlsY + lineHeight, 110, "left")
+    
+    love.graphics.printf("Help Screen:", centerX, moreControlsY + lineHeight*2, 110, "left")
+    love.graphics.printf("H", centerX + 110, moreControlsY + lineHeight*2, 110, "left")
+    
+    love.graphics.printf("Back/Cancel:", centerX, moreControlsY + lineHeight*3, 110, "left")
+    love.graphics.printf("ESC", centerX + 110, moreControlsY + lineHeight*3, 110, "left")
+    
+    -- ===== 中间区域：种子选择 =====
+    love.graphics.setFont(headerFont)
+    love.graphics.setColor(1, 1, 0.3)
+    love.graphics.printf("Seed Selection", centerX, moreControlsY + lineHeight*4 + sectionSpace, 220, "left")
+    
+    love.graphics.setFont(contentFont)
+    love.graphics.setColor(1, 1, 1)
+    local seedY = moreControlsY + lineHeight*5 + sectionSpace
+    
+    love.graphics.printf("Cabbage:", centerX, seedY, 110, "left")
+    love.graphics.printf("Q", centerX + 110, seedY, 110, "left")
+    
+    love.graphics.printf("Beans:", centerX, seedY + lineHeight, 110, "left")
+    love.graphics.printf("W", centerX + 110, seedY + lineHeight, 110, "left")
+    
+    love.graphics.printf("Maize:", centerX, seedY + lineHeight*2, 110, "left")
+    love.graphics.printf("E", centerX + 110, seedY + lineHeight*2, 110, "left")
+    
+    love.graphics.printf("Sweet Potato:", centerX, seedY + lineHeight*3, 110, "left")
+    love.graphics.printf("R", centerX + 110, seedY + lineHeight*3, 110, "left")
+    
+    -- ===== 中间区域：游戏提示 =====
+    love.graphics.setFont(headerFont)
+    love.graphics.setColor(1, 1, 0.3)
+    love.graphics.printf("Game Tips", centerX, seedY + lineHeight*4 + sectionSpace, 220, "left")
+    
+    love.graphics.setFont(contentFont)
+    love.graphics.setColor(1, 1, 1)
+    local tipsY = seedY + lineHeight*5 + sectionSpace
+    
+    love.graphics.printf("• Each action costs 1 point", centerX, tipsY, 220, "left")
+    love.graphics.printf("• Rainy days provide more water", centerX, tipsY + lineHeight, 220, "left")
+    love.graphics.printf("• Health decreases over time", centerX, tipsY + lineHeight*2, 220, "left")
+    love.graphics.printf("• Low health reduces actions", centerX, tipsY + lineHeight*3, 220, "left")
+    
+    -- ===== 右侧区域：游戏关卡 =====
+    love.graphics.setFont(headerFont)
+    love.graphics.setColor(1, 1, 0.3)
+    love.graphics.printf("Game Levels", rightX, startY, 220, "left")
+    
+    love.graphics.setFont(contentFont)
+    love.graphics.setColor(1, 1, 1)
+    local levelsY = startY + 25
+    
+    -- Level 1
+    love.graphics.printf("Level 1", rightX, levelsY, 220, "left")
+    love.graphics.printf("• 2x2 grid (4 plots)", rightX + 10, levelsY + lineHeight, 210, "left")
+    love.graphics.printf("• Goal: Harvest 1 of each crop", rightX + 10, levelsY + lineHeight*2, 210, "left")
+    
+    -- Level 2
+    love.graphics.printf("Level 2", rightX, levelsY + lineHeight*3 + sectionSpace, 220, "left")
+    love.graphics.printf("• 3x3 grid (9 plots)", rightX + 10, levelsY + lineHeight*4 + sectionSpace, 210, "left") 
+    love.graphics.printf("• Goal: Harvest 3 of each crop", rightX + 10, levelsY + lineHeight*5 + sectionSpace, 210, "left")
+    
+    -- Level 3
+    love.graphics.printf("Level 3", rightX, levelsY + lineHeight*6 + sectionSpace*2, 220, "left")
+    love.graphics.printf("• 4x4 grid (16 plots)", rightX + 10, levelsY + lineHeight*7 + sectionSpace*2, 210, "left")
+    love.graphics.printf("• Goal: Harvest 5 of each crop", rightX + 10, levelsY + lineHeight*8 + sectionSpace*2, 210, "left")
+    
+    -- ===== 右侧区域：作物信息 =====
+    love.graphics.setFont(headerFont)
+    love.graphics.setColor(1, 1, 0.3)
+    love.graphics.printf("Crop Information", rightX, levelsY + lineHeight*9 + sectionSpace*3, 220, "left")
+    
+    love.graphics.setFont(contentFont)
+    love.graphics.setColor(1, 1, 1)
+    local cropsY = levelsY + lineHeight*10 + sectionSpace*3
+    
+    love.graphics.printf("• Cabbage: Fast growth, medium water", rightX, cropsY, 220, "left")
+    love.graphics.printf("• Beans: Medium growth, low water", rightX, cropsY + lineHeight, 220, "left")
+    love.graphics.printf("• Maize: Slow growth, high water", rightX, cropsY + lineHeight*2, 220, "left")
+    love.graphics.printf("• Sweet Potato: Slowest, most water", rightX, cropsY + lineHeight*3, 220, "left")
+    
     -- 返回游戏提示
+    love.graphics.setFont(smallFont)
     love.graphics.setColor(1, 0.7, 0.7)
-    love.graphics.printf("Press ESC to return", 0, love.graphics.getHeight() - 46, love.graphics.getWidth(), "center")
+    love.graphics.printf("Press ESC to return to game", 0, screenHeight - 50, screenWidth, "center")
 end
 
 function drawDayPopup()
@@ -1008,7 +1083,7 @@ function drawWateringMode()
     love.graphics.printf("Click to Water, Select Crop:", 0, 130, love.graphics.getWidth(), "center")
 
     -- 显示作物选项
-    love.graphics.setFont(tinyFont)
+    love.graphics.setFont(smallFont)
     local startY = 180
     local spacing = 40
     love.graphics.printf("S: SweetPotatos (-3 Water)", 0, startY, love.graphics.getWidth(), "center")
@@ -1440,65 +1515,6 @@ function love.mousepressed(x, y, button)
                                 end
                             end
 
-                        -- -- 浇水
-                        -- elseif grid[gridX][gridY].status == "planted" then
-                        --     if water < 3 then
-                        --         print("Water too low. Automatically advancing to next day.")
-                        --         advanceToNextDay()
-                        --         return
-                        --     end
-
-                        --     local plot = grid[gridX][gridY]
-                        --     local cropData = crops[plot.crop]
-
-                        --     local waterCost = 1
-                        --     if plot.crop == "Sweet_Potato_seed" then
-                        --         waterCost = 3
-                        --     elseif plot.crop == "Beans_seed" then
-                        --         waterCost = 5
-                        --     elseif plot.crop == "Cabbage_seed" then
-                        --         waterCost = 7
-                        --     elseif plot.crop == "Maize_seed" then
-                        --         waterCost = 9
-                        --     end
-
-                        --     if water >= waterCost and actionPoints > 0 and plot.dailyWateringCount < plot.wateringLimit then
-                        --         plot.waterLevel = plot.waterLevel + 1
-                        --         plot.wateringProgress = plot.wateringProgress + 1
-
-                        --         if plot.wateringProgress >= cropData.dailyWateringLimit then
-                        --             plot.growth = plot.growth + 1
-                        --             plot.wateringProgress = 0
-                        --             if plot.growth >= cropData.growthTime then
-                        --                 plot.status = "matured"
-                        --                 print(cropData.name .. " matured at grid [" .. gridX .. "," .. gridY .. "]")
-                        --             end
-                        --         end
-
-                        --         water = water - waterCost
-                        --         actionPoints = actionPoints - 1
-                        --         plot.dailyWateringCount = plot.dailyWateringCount + 1
-
-                        --         print("Watered:", gridX, gridY,
-                        --             "Water level:", plot.waterLevel,
-                        --             "/", cropData.waterNeed,
-                        --             "Daily watering count:", plot.dailyWateringCount,
-                        --             "/", plot.wateringLimit,
-                        --             "Cost:", waterCost)
-
-                        --         if actionPoints <= 0 then
-                        --             advanceToNextDay()
-                        --         end
-                        --     else
-                        --         if plot.dailyWateringCount >= plot.wateringLimit then
-                        --             print("Daily watering limit reached for this crop!")
-                        --         elseif water < waterCost then
-                        --             print("Not enough water!")
-                        --         else
-                        --             print("No action points left!")
-                        --         end
-                        --     end
-
                         -- 成熟作物收割
                         elseif grid[gridX][gridY].status == "matured" and actionPoints > 0 then
                             local cropKey = grid[gridX][gridY].crop
@@ -1595,10 +1611,10 @@ function advanceToNextDay()
     -- 保存当前天数（用于弹窗显示）
     local oldDay = day
     day = day + 1
-    -- ▼▼▼ 每日健康减少 ▼▼▼ --
+    --  每日健康减少  --
     player.health = math.max(0, player.health - 5)  -- 每天减少5点健康值
     
-        -- ▼▼▼ 修改特餐设置 ▼▼▼ --
+        --  修改特餐设置  --
     -- 随机选择当日特餐
     kitchenMenu.dailyMeal = possibleMeals[math.random(1, #possibleMeals)]
     -- 重置所有配方加成
@@ -1609,11 +1625,11 @@ function advanceToNextDay()
     if recipes[kitchenMenu.dailyMeal] then
         recipes[kitchenMenu.dailyMeal].health = recipes[kitchenMenu.dailyMeal].baseHealth * 1.2
     end
-    -- ▲▲▲ 修改结束 ▲▲▲ --
+   
     
     -- 重置行动点
     actionPoints = 20
-    -- ▼▼▼ 根据健康值调整行动点 ▼▼▼ --
+    --  根据健康值调整行动点  --
     if player.health <= 30 then
         actionPoints = 10  -- 健康值过低时行动点上限为10
         player.maxHealth = 100  -- 重置最大健康值（防止修改）
@@ -1763,7 +1779,7 @@ function drawInteractionTip()
     end
 end
 
--- ▼▼▼ 新增送厨房函数 ▼▼▼ --
+-- 新增送厨房  --
 function sendToKitchen(item, qty)
     local cropName = item.name:gsub("_seed", "")
     if player.inventory[item.name] and player.inventory[item.name] >= qty then
