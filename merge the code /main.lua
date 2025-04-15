@@ -1391,49 +1391,7 @@ function handleNavigation(key)
         processTransaction()
     end
 end
-    
-    -- 仓库发送到厨房（K键）
-    -- elseif (key == "k" or key == "K") and gameState == "warehouse" then
-    --     if #items > 0 and items[selectedItem] then
-    --         local item = items[selectedItem]
-            
-    --         -- 调试信息：打印当前选择的物品和数量
-    --         print("[DEBUG] Attempting to send to kitchen:")
-    --         print("Selected item:", item.name)
-    --         print("Quantity:", quantity)
-    --         print("Warehouse stock:", player.inventory.warehouse[item.name] or 0)
-            
-    --         -- 检查仓库库存是否足够
-    --         if player.inventory.warehouse[item.name] and player.inventory.warehouse[item.name] >= quantity then
-    --             -- 确保厨房库存存在该物品
-    --             if not player.inventory.kitchen[item.name] then
-    --                 player.inventory.kitchen[item.name] = 0
-    --             end
-                
-    --             -- 执行转移
-    --             player.inventory.warehouse[item.name] = player.inventory.warehouse[item.name] - quantity
-    --             player.inventory.kitchen[item.name] = player.inventory.kitchen[item.name] + quantity
-                
-    --             -- 调试信息：打印转移结果
-    --             print("Successfully sent", quantity, item.name, "to kitchen!")
-    --             print("Warehouse after:", player.inventory.warehouse[item.name])
-    --             print("Kitchen after:", player.inventory.kitchen[item.name])
-                
-    --             quantity = 1 -- 重置选择数量
-    --         else
-    --             print("Error: Not enough "..item.name.." in warehouse! (Available: "..(player.inventory.warehouse[item.name] or 0)..", Needed: "..quantity..")")
-    --         end
-    --     else
-    --         print("Error: No item selected or warehouse is empty!")
-    --     end
-    
-    -- 数量调整按钮（+-）
---     elseif key == "left" then
---         quantity = math.max(1, quantity - 1) -- 左键减1
---     elseif key == "right" then
---         quantity = quantity + 1 -- 右键加1
---     end
--- end
+
 
 
 -- 从shop.lua继承的交易处理函数
@@ -1878,3 +1836,5 @@ function getNearestPlantableCellFromPosition(x, y, maxDistance)
 
     return closestX, closestY
 end
+
+
