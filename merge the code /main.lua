@@ -9,14 +9,29 @@ function love.load()
     background = love.graphics.newImage("art/background.png")
     land4 = love.graphics.newImage("art/land16.png")
 
-    -- 加载作物图片
+    -- 加载作物图片, 加载三个阶段的图片
+    -- 加载作物图片（三个阶段）
     cropImages = {
-        Cabbage_seed = love.graphics.newImage("art/cabbage.png"),
-        Beans_seed = love.graphics.newImage("art/beans.png"),
-        Maize_seed = love.graphics.newImage("art/maize.png"),
-        Sweet_Potato_seed = love.graphics.newImage("art/sweetpotato.png")
+        -- 卷心菜
+        Cabbage_seed = love.graphics.newImage("art/cabbage_seed.png"),
+        Cabbage_mid = love.graphics.newImage("art/cabbage_mid.png"),
+        Cabbage = love.graphics.newImage("art/cabbage.png"),
+        
+        -- 豆子
+        Beans_seed = love.graphics.newImage("art/beans_seed.png"),
+        Beans_mid = love.graphics.newImage("art/beans_mid.png"),
+        Beans = love.graphics.newImage("art/beans.png"),
+        
+        -- 玉米
+        Maize_seed = love.graphics.newImage("art/maize_seed.png"),
+        Maize_mid = love.graphics.newImage("art/maize_mid.png"),
+        Maize = love.graphics.newImage("art/maize.png"),
+        
+        -- 红薯
+        Sweet_Potato_seed = love.graphics.newImage("art/sweetpotato_seed.png"),
+        Sweet_Potato_mid = love.graphics.newImage("art/sweetpotato_mid.png"),
+        Sweet_Potato = love.graphics.newImage("art/sweetpotato.png")
     }
-
     gamebackground = background
 
     -- 加载角色图片和属性
@@ -64,7 +79,6 @@ function love.load()
        "Roasted Sweet Potato",  -- 烤红薯
         "Bean Stew",        -- 豆子炖菜
     }
-    
     
     levelRequirements = {
         {4, 1},  -- 第一关：4种作物各1个
@@ -256,7 +270,6 @@ function love.update(dt)
 -- 检查是否靠近种子栏
         if gameState == "game" and not showDayPopup and not showLevelPopup and not showWinPopup then
 
-        
         local inventoryY = love.graphics.getHeight() - 90  -- 种子栏的Y坐标
         nearSeedBar = (characterData.y > inventoryY - 30 and characterData.y < inventoryY + 10)
         
@@ -320,7 +333,6 @@ function love.update(dt)
             showInteractionTip = false
         end
     end
-
 
     -- 处理 Day 弹窗计时和淡入淡出效果
     if showDayPopup then
@@ -393,7 +405,6 @@ function love.update(dt)
 
 end
 
-
 function love.draw()
     -- 先绘制背景
     love.graphics.setColor(1, 1, 1) -- 确保背景图片颜色正确
@@ -452,7 +463,6 @@ function love.draw()
         love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     end 
 end
-
 
 function drawMenu()
     love.graphics.setFont(font)
@@ -528,10 +538,6 @@ function drawGrid()
     local gridSize = 4  
 
     love.graphics.setFont(tinyFont)
-    
-    -- 绘制统一的提示信息(在格子上方)
-    --love.graphics.setColor(1, 1, 1)
-    --love.graphics.printf("Click an empty plot to plant", gridStartX, gridStartY - 35, gridSize * (cellSize + padding), "center")
 
     for x = 1, gridSize do
         for y = 1, gridSize do
@@ -557,14 +563,30 @@ function drawGrid()
                 local cropKey = plot.crop
 
                 -- 绘制作物图片
-                if cropKey and cropImages[cropKey] then
-                    local img = cropImages[cropKey]
-                    local imgScale = (cellSize * 1.2) / math.max(img:getWidth(), img:getHeight())
-                    local drawX = cellX + (cellSize - img:getWidth() * imgScale) / 2
-                    local drawY = cellY + (cellSize - img:getHeight() * imgScale) / 2
+                if cropKey and cropImages then
+                    local img
+                    local plot = grid[x][y]
                     
-                    love.graphics.setColor(1, 1, 1)
-                    love.graphics.draw(img, drawX, drawY, 0, imgScale, imgScale)
+                    -- 根据生长阶段选择不同的图片
+                    if plot.status == "matured" then
+                        -- 成熟阶段使用不带"_seed"后缀的图片名
+                        img = cropImages[cropKey:gsub("_seed", "")]
+                    elseif plot.growth / crops[cropKey].growthTime >= 0.5 then
+                        -- 中期阶段使用带"_mid"后缀的图片名
+                        img = cropImages[cropKey:gsub("_seed", "_mid")]
+                    else
+                        -- 种子阶段使用原图片
+                        img = cropImages[cropKey]
+                    end
+                    
+                    if img then
+                        local imgScale = (cellSize * 1.2) / math.max(img:getWidth(), img:getHeight())
+                        local drawX = cellX + (cellSize - img:getWidth() * imgScale) / 2
+                        local drawY = cellY + (cellSize - img:getHeight() * imgScale) / 2
+                        
+                        love.graphics.setColor(1, 1, 1)
+                        love.graphics.draw(img, drawX, drawY, 0, imgScale, imgScale)
+                    end
                 end
 
                 -- 绘制双进度条（调整到格子顶部边缘）
@@ -592,7 +614,6 @@ function drawGrid()
         end
     end
 end
-
 
 function drawControlBar()
     -- 确保barY有值，通过本地定义而不是依赖全局变量
@@ -735,7 +756,7 @@ function drawHelp()
     local lineHeight = 30
     local sectionSpace = 10
     
-    -- ===== 左侧区域：如何游戏 =====
+    -- 左侧区域：如何游戏
     love.graphics.setFont(headerFont)
     love.graphics.setColor(1, 1, 0.3)
     love.graphics.printf("How to Play", leftX, startY, 220, "left")
@@ -1392,8 +1413,6 @@ function handleNavigation(key)
     end
 end
 
-
-
 -- 从shop.lua继承的交易处理函数
 function processTransaction()
     local item = filterItems(gameState == "shop")[selectedItem]
@@ -1605,7 +1624,6 @@ function love.mousepressed(x, y, button)
     end
 end
 
-
 -- 新增函数：推进到下一天的逻辑
 function advanceToNextDay()
     -- 保存当前天数（用于弹窗显示）
@@ -1625,7 +1643,6 @@ function advanceToNextDay()
     if recipes[kitchenMenu.dailyMeal] then
         recipes[kitchenMenu.dailyMeal].health = recipes[kitchenMenu.dailyMeal].baseHealth * 1.2
     end
-   
     
     -- 重置行动点
     actionPoints = 20
@@ -1779,33 +1796,6 @@ function drawInteractionTip()
     end
 end
 
--- 新增送厨房  --
--- function sendToKitchen(item, qty)
---     -- 确保 item.name 是 "Cabbage" 而不是 "Cabbage_seed"
---     local cropName = item.name
-    
---     -- 调试信息：打印当前仓库和厨房库存
---     print("[DEBUG] Attempting to send to kitchen:")
---     print("Crop:", cropName)
---     print("Warehouse before:", player.inventory.warehouse[cropName] or 0)
---     print("Kitchen before:", player.inventory.kitchen[cropName] or 0)
-    
---     -- 检查仓库是否有足够库存
---     if player.inventory.warehouse[cropName] and player.inventory.warehouse[cropName] >= qty then
---         -- 从仓库扣除
---         player.inventory.warehouse[cropName] = player.inventory.warehouse[cropName] - qty
-        
---         -- 确保 kitchen 存在该作物，并增加数量
---         player.inventory.kitchen[cropName] = (player.inventory.kitchen[cropName] or 0) + qty
-        
---         -- 调试信息：打印转移后的库存
---         print("Warehouse after:", player.inventory.warehouse[cropName] or 0)
---         print("Kitchen after:", player.inventory.kitchen[cropName] or 0)
---         print("Successfully sent", qty, cropName, "to kitchen!")
---     else
---         print("Error: Not enough", cropName, "in warehouse! (Available:", player.inventory.warehouse[cropName] or 0, "Needed:", qty, ")")
---     end
--- end
 
 function getNearestPlantableCellFromPosition(x, y, maxDistance)
     local gridStartX = 250
@@ -1836,5 +1826,3 @@ function getNearestPlantableCellFromPosition(x, y, maxDistance)
 
     return closestX, closestY
 end
-
-
