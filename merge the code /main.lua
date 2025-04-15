@@ -571,7 +571,7 @@ function drawGrid()
                     if plot.status == "matured" then
                         -- 成熟阶段使用不带"_seed"后缀的图片名
                         img = cropImages[cropKey:gsub("_seed", "")]
-                    elseif plot.growth / crops[cropKey].growthTime >= 0.5 then
+                    elseif plot.growth / crops[cropKey].growthTime >= 0.4 then
                         -- 中期阶段使用带"_mid"后缀的图片名
                         img = cropImages[cropKey:gsub("_seed", "_mid")]
                     else
