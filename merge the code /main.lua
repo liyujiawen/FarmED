@@ -4,6 +4,11 @@ function love.load()
 
     waterMode = false  -- 是否处于浇水模式
     weatherTypes = {"Sunny", "Rainy"}  -- 可能的天气
+    -- 让游戏启动（第 1 天）时固定晴天
+    weather = "Sunny"
+    water = 80
+    maxWater = 100
+
 
     -- 加载背景图片
     background = love.graphics.newImage("art/background.png")
@@ -99,7 +104,7 @@ function love.load()
     nearPlot = false  -- 是否靠近地块
     nearPlotX = 0  -- 靠近的地块X坐标
     nearPlotY = 0  -- 靠近的地块Y坐标
-    weather = weatherTypes[math.random(1, #weatherTypes)] -- 随机天气
+   -- weather = weatherTypes[math.random(1, #weatherTypes)] -- 随机天气
     
     if weather == "Sunny" then
         water = 80
@@ -571,7 +576,7 @@ function drawGrid()
                     if plot.status == "matured" then
                         -- 成熟阶段使用不带"_seed"后缀的图片名
                         img = cropImages[cropKey:gsub("_seed", "")]
-                    elseif plot.growth / crops[cropKey].growthTime >= 0.4 then
+                    elseif plot.growth / crops[cropKey].growthTime >= 0.5 then
                         -- 中期阶段使用带"_mid"后缀的图片名
                         img = cropImages[cropKey:gsub("_seed", "_mid")]
                     else
@@ -1280,11 +1285,13 @@ function love.keypressed(key)
             selectedSeed = "Sweet_Potato_seed"
         elseif key == "n" or key == "N" then
             advanceToNextDay()
-            local newWeather = weatherTypes[math.random(1, #weatherTypes)]
-            while newWeather == weather do
-                newWeather = weatherTypes[math.random(1, #weatherTypes)]
+            local r = math.random()  -- 返回 0~1 的随机小数
+            if r < 0.2 then         -- 20% 的概率雨天
+                weather = "Rainy"
+            else                   -- 80% 的概率晴天
+                weather = "Sunny"
             end
-            weather = newWeather
+            
             if weather == "Sunny" then
                 water = 80
                 maxWater = 100
@@ -1292,6 +1299,7 @@ function love.keypressed(key)
                 water = 100
                 maxWater = 100
             end
+            
         elseif key == "s" or key == "S" then
             gameState = "shop"
         elseif key == "C" or key == "c" then
@@ -1813,7 +1821,7 @@ function getNearestPlantableCellFromPosition(x, y, maxDistance)
                 local centerX = gridStartX + (gridX - 1) * (cellSize + padding) + cellSize / 2
                 local centerY = gridStartY + (gridY - 1) * (cellSize + padding) + cellSize / 2
                 local dist = math.sqrt((x - centerX)^2 + (y - centerY)^2)
-                print(string.format("Check the plot[%d,%d]，distance %.2f", gridX, gridY, dist))
+                print(string.format("Check the plot[%d,%d],distance %.2f", gridX, gridY, dist))
 
                 if dist < closestDist and dist <= maxDistance then
                     closestDist = dist
