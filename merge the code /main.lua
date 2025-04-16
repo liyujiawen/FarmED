@@ -15,23 +15,19 @@ function love.load()
     land4 = love.graphics.newImage("art/land16.png")
 
     -- 加载作物图片, 加载三个阶段的图片
-    -- 加载作物图片（三个阶段）
     cropImages = {
         -- 卷心菜
         Cabbage_seed = love.graphics.newImage("art/cabbage_seed.png"),
         Cabbage_mid = love.graphics.newImage("art/cabbage_mid.png"),
         Cabbage = love.graphics.newImage("art/cabbage.png"),
-        
         -- 豆子
         Beans_seed = love.graphics.newImage("art/beans_seed.png"),
         Beans_mid = love.graphics.newImage("art/beans_mid.png"),
         Beans = love.graphics.newImage("art/beans.png"),
-        
         -- 玉米
         Maize_seed = love.graphics.newImage("art/maize_seed.png"),
         Maize_mid = love.graphics.newImage("art/maize_mid.png"),
         Maize = love.graphics.newImage("art/maize.png"),
-        
         -- 红薯
         Sweet_Potato_seed = love.graphics.newImage("art/sweetpotato_seed.png"),
         Sweet_Potato_mid = love.graphics.newImage("art/sweetpotato_mid.png"),
@@ -329,7 +325,7 @@ function love.update(dt)
                 interactionTip = "Press space to harvest"
                 showInteractionTip = true
             elseif plot.status == "locked" then
-                interactionTip = "This lot is unlocked"
+                interactionTip = "This lot is locked"
                 showInteractionTip = true
             else
                 showInteractionTip = false
@@ -544,23 +540,35 @@ function drawGrid()
 
     love.graphics.setFont(tinyFont)
 
+     -- 预加载锁图标（仅在第一次运行时加载）
+     if not lockIcon then
+        lockIcon = love.graphics.newImage("art/lock.png")
+        -- 动态计算锁图标缩放比例
+        lockIconScale = math.min(
+            (cellSize * 1.3) / lockIcon:getWidth(),  -- 按宽度比例
+            (cellSize * 1.3) / lockIcon:getHeight()  -- 按高度比例
+        )
+    end
+
     for x = 1, gridSize do
         for y = 1, gridSize do
             local cellX = gridStartX + (x-1) * (cellSize + padding)
             local cellY = gridStartY + (y-1) * (cellSize + padding)
             
             -- 绘制土地格子
-            if grid[x][y].status == "empty" then
-                love.graphics.setColor(0.6, 0.4, 0.2)  -- 可种植的土地
-            elseif grid[x][y].status == "locked" then
-                love.graphics.setColor(0.3, 0.3, 0.3)  -- 锁定的土地，显示为深灰色
-            else
-                love.graphics.setColor(0.6, 0.4, 0.2)
+            -- 统一设定：所有土地格子完全透明（不绘制底色和边框）
+            -- 仅未解锁土地显示锁图标
+            if grid[x][y].status == "locked" then
+                -- 计算锁图标居中位置（精确到像素）
+                local lockW = lockIcon:getWidth() * lockIconScale
+                local lockH = lockIcon:getHeight() * lockIconScale
+                local lockX = cellX + (cellSize - lockW) / 2
+                local lockY = cellY + (cellSize - lockH) / 2
+                
+                -- 绘制锁图标（浅灰色，60%透明度）
+                love.graphics.setColor(0.8, 0.8, 0.8, 0.6)
+                love.graphics.draw(lockIcon, lockX, lockY, 0, lockIconScale, lockIconScale)
             end
-            
-            love.graphics.rectangle("fill", cellX, cellY, cellSize, cellSize)
-            love.graphics.setColor(0.3, 0.2, 0.1)
-            love.graphics.rectangle("line", cellX, cellY, cellSize, cellSize)
             
             -- 作物和进度条绘制
             if grid[x][y].status == "planted" or grid[x][y].status == "matured" then  
@@ -713,14 +721,14 @@ function drawTransactionInterface(title, isShop)
     love.graphics.setFont(smallFont)
     love.graphics.setColor(0.9, 0.9, 0.2)
     local balanceText = "Balance: "..formatKES(player.kes)
-    love.graphics.printf(balanceText, 60, 520, 300, "left")  -- 位置：X60,Y520
+    love.graphics.printf(balanceText, 60, 540, 300, "left")  -- 位置：X60,Y520
 end
 
 -- 从shop.lua继承的控制面板函数
 function drawControlPanel(actionText)
     -- 按钮背景
     love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
-    love.graphics.rectangle("fill", buttonArea.x-10, 390, buttonArea.width+20, 80, 5)
+    love.graphics.rectangle("fill", buttonArea.x-30, 390, buttonArea.width+10, 65, 5)
 
     -- 数量按钮
     love.graphics.setFont(smallFont)
@@ -733,8 +741,8 @@ function drawControlPanel(actionText)
     end
 
     -- 数量显示
-    love.graphics.printf("QUANTITY: "..quantity, buttonArea.x, 450, buttonArea.width, "center")
-    love.graphics.printf(actionText.."\nESC - Cancel", buttonArea.x, 480, buttonArea.width, "center")
+    love.graphics.printf("QUANTITY: "..quantity, buttonArea.x, 470, buttonArea.width, "center")
+    love.graphics.printf(actionText.."\nESC - Cancel", buttonArea.x, 490, buttonArea.width, "center")
 end
 
 function drawHelp()
@@ -1123,14 +1131,14 @@ function drawWateringMode()
     love.graphics.rectangle("fill", barX, barY, barWidth, barHeight)
     
     -- **绘制当前水量**
-    local waterRatio = math.max(water / 120, 0) -- 计算水量比例（最大 120）
+    local waterRatio = math.max(water / 100, 0) -- 计算水量比例（最大 100）
     love.graphics.setColor(0.0, 0.7, 1.0) -- 蓝色水条
     love.graphics.rectangle("fill", barX, barY, barWidth * waterRatio, barHeight)
     
     -- **显示水量数值**
     love.graphics.setFont(smallFont)
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Water: " .. water .. " / 100", 0, barY - 25, love.graphics.getWidth(), "center")
+    love.graphics.printf("Water: " .. water .. " / 100", 0, barY + 40, love.graphics.getWidth(), "center")
     
     -- 退出提示
     love.graphics.setColor(1, 0.7, 0.7)
