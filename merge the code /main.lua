@@ -235,6 +235,11 @@ function love.update(dt)
     local screenWidth = love.graphics.getWidth()
     buttonArea.x = (screenWidth - buttonArea.width) / 2
 
+       -- 检查健康值是否为0，如果是则清空行动点
+       if player.health <= 0 then
+        actionPoints = 0
+    end
+
     -- Character movement logic - ADD THIS PART
     if gameState == "game" and not waterMode and not showDayPopup and not showLevelPopup and not showWinPopup then
         local dx, dy = 0, 0
@@ -526,8 +531,21 @@ function drawStatusBar()
     love.graphics.printf("Action Points: " .. actionPoints .. "/20", itemWidth*2, 15, itemWidth, "center")
     love.graphics.printf("Weather: " .. weather, itemWidth*3, 15, itemWidth, "center")
     love.graphics.printf("Water: " .. water, itemWidth*4, 15, itemWidth, "center")
-    love.graphics.setColor(0.2, 1, 0.2)  -- RGB绿色
+      -- 健康值显示 - 根据健康值设置不同颜色
+      if player.health <= 0 then
+        love.graphics.setColor(1, 0, 0) -- 红色表示严重饥饿
+    elseif player.health < 30 then
+        love.graphics.setColor(1, 0.5, 0) -- 橙色表示警告
+    else
+        love.graphics.setColor(0.2, 1, 0.2) -- 绿色表示健康
+    end
     love.graphics.printf("Health: " .. player.health, 0, 40, itemWidth, "center")  -- X=0对齐Day，Y=40
+    
+    -- 如果健康值为0，显示饥饿警告
+    if player.health <= 0 then
+        love.graphics.setColor(1, 0, 0) -- 红色警告
+        love.graphics.printf("STARVING! CANNOT TAKE ACTIONS!", 0, 70, screenWidth, "center")
+    end
     love.graphics.setColor(1, 1, 1)  -- 恢复默认白色
 end
 
@@ -1320,6 +1338,10 @@ function love.keypressed(key)
         elseif key == "t" or key == "T" then
             waterMode = not waterMode
         elseif key == "space" then
+             -- 如果健康值为0，不允许任何消耗行动点的操作
+    if player.health <= 0 then
+        return
+    end
             if nearSeedBar then
                 if actionPoints > 0 then
                     local availableSeeds = {"Cabbage_seed", "Beans_seed", "Maize_seed", "Sweet_Potato_seed"}
@@ -1710,8 +1732,12 @@ function advanceToNextDay()
     
     -- 重置行动点
     actionPoints = 20
-    --  根据健康值调整行动点  --
-    if player.health <= 30 then
+    
+     -- 根据健康值调整行动点
+     if player.health <= 0 then
+        actionPoints = 0  -- 健康值为0时无法行动
+        player.maxHealth = 100  -- 重置最大健康值（防止修改）
+    elseif player.health <= 30 then
         actionPoints = 10  -- 健康值过低时行动点上限为10
         player.maxHealth = 100  -- 重置最大健康值（防止修改）
     else
