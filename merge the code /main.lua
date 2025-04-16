@@ -223,6 +223,8 @@ function love.load()
         }
     }
     --  配方数据添加完成 --
+    helpSection = nil  -- 当前选择的帮助章节
+    helpTopicHover = nil  -- 当前鼠标悬停的主题
 
     -- 如果关卡弹窗激活，在最上层绘制
     if showLevelPopup then
@@ -326,6 +328,14 @@ function love.update(dt)
             elseif plot.status == "planted" then
                 interactionTip = "Press F to water"
                 showInteractionTip = true
+             -- 检查是否已经浇足够水
+        if plot.dailyWateringCount >= plot.wateringLimit then
+            interactionTip = "It's watered enough"
+            showInteractionTip = true
+        else
+            interactionTip = "Press F to water"
+            showInteractionTip = true
+        end
             elseif plot.status == "matured" then
                 interactionTip = "Press space to harvest"
                 showInteractionTip = true
@@ -773,157 +783,256 @@ function drawHelp()
     love.graphics.setColor(1, 1, 0.8)
     love.graphics.printf("FarmED - Game Guide", 0, 40, love.graphics.getWidth(), "center")
     
-    -- 定义字体大小
-    local headerFont = love.graphics.newFont(18) -- 标题字体
-    local contentFont = love.graphics.newFont(14) -- 内容字体
-    
-    -- 屏幕尺寸和布局常量
-    local screenWidth = love.graphics.getWidth()
-    local screenHeight = love.graphics.getHeight()
-    local leftX = 60
-    local centerX = 300
-    local rightX = 550
-    local startY = 90
-    local lineHeight = 30
-    local sectionSpace = 10
-    
-    -- 左侧区域：如何游戏
-    love.graphics.setFont(headerFont)
-    love.graphics.setColor(1, 1, 0.3)
-    love.graphics.printf("How to Play", leftX, startY, 220, "left")
-    
-    love.graphics.setFont(contentFont)
-    love.graphics.setColor(1, 1, 1)
-    local howToPlayY = startY + 25
-    love.graphics.printf("1. Plant seeds in empty plots", leftX, howToPlayY, 220, "left")
-    love.graphics.printf("2. Water your plants daily", leftX, howToPlayY + lineHeight, 220, "left")
-    love.graphics.printf("3. Harvest mature crops", leftX, howToPlayY + lineHeight*2, 220, "left")
-    love.graphics.printf("4. Sell crops at the warehouse", leftX, howToPlayY + lineHeight*3, 220, "left")
-    love.graphics.printf("5. Buy new seeds at the shop", leftX, howToPlayY + lineHeight*4, 220, "left")
-    love.graphics.printf("6. Cook meals in the kitchen", leftX, howToPlayY + lineHeight*5, 220, "left")
-    
-    -- ===== 左侧区域：基本控制 =====
-    love.graphics.setFont(headerFont)
-    love.graphics.setColor(1, 1, 0.3)
-    love.graphics.printf("Basic Controls", leftX, howToPlayY + lineHeight*6 + sectionSpace, 220, "left")
-    
-    love.graphics.setFont(contentFont)
-    love.graphics.setColor(1, 1, 1)
-    local controlsY = howToPlayY + lineHeight*7 + sectionSpace
-    
-    love.graphics.printf("Movement:", leftX, controlsY, 110, "left")
-    love.graphics.printf("Arrow Keys", leftX + 110, controlsY, 110, "left")
-    
-    love.graphics.printf("Plant/Harvest:", leftX, controlsY + lineHeight, 110, "left")
-    love.graphics.printf("SPACE", leftX + 110, controlsY + lineHeight, 110, "left")
-    
-    love.graphics.printf("Water Plant:", leftX, controlsY + lineHeight*2, 110, "left")
-    love.graphics.printf("F", leftX + 110, controlsY + lineHeight*2, 110, "left")
-    
-    love.graphics.printf("Next Day:", leftX, controlsY + lineHeight*3, 110, "left")
-    love.graphics.printf("N", leftX + 110, controlsY + lineHeight*3, 110, "left")
-    
-    love.graphics.printf("Kitchen Menu:", leftX, controlsY + lineHeight*4, 110, "left")
-    love.graphics.printf("K", leftX + 110, controlsY + lineHeight*4, 110, "left")
-    
-    -- ===== 中间区域：界面控制 =====
-    love.graphics.setFont(headerFont)
-    love.graphics.setColor(1, 1, 0.3)
-    love.graphics.printf("Interface Controls", centerX, startY, 220, "left")
-    
-    love.graphics.setFont(contentFont)
-    love.graphics.setColor(1, 1, 1)
-    local moreControlsY = startY + 25
-    
-    love.graphics.printf("Shop:", centerX, moreControlsY, 110, "left") 
-    love.graphics.printf("S", centerX + 110, moreControlsY, 110, "left")
-    
-    love.graphics.printf("Warehouse:", centerX, moreControlsY + lineHeight, 110, "left")
-    love.graphics.printf("C", centerX + 110, moreControlsY + lineHeight, 110, "left")
-    
-    love.graphics.printf("Help Screen:", centerX, moreControlsY + lineHeight*2, 110, "left")
-    love.graphics.printf("H", centerX + 110, moreControlsY + lineHeight*2, 110, "left")
-    
-    love.graphics.printf("Back/Cancel:", centerX, moreControlsY + lineHeight*3, 110, "left")
-    love.graphics.printf("ESC", centerX + 110, moreControlsY + lineHeight*3, 110, "left")
-    
-    -- ===== 中间区域：种子选择 =====
-    love.graphics.setFont(headerFont)
-    love.graphics.setColor(1, 1, 0.3)
-    love.graphics.printf("Seed Selection", centerX, moreControlsY + lineHeight*4 + sectionSpace, 220, "left")
-    
-    love.graphics.setFont(contentFont)
-    love.graphics.setColor(1, 1, 1)
-    local seedY = moreControlsY + lineHeight*5 + sectionSpace
-    
-    love.graphics.printf("Cabbage:", centerX, seedY, 110, "left")
-    love.graphics.printf("Q", centerX + 110, seedY, 110, "left")
-    
-    love.graphics.printf("Beans:", centerX, seedY + lineHeight, 110, "left")
-    love.graphics.printf("W", centerX + 110, seedY + lineHeight, 110, "left")
-    
-    love.graphics.printf("Maize:", centerX, seedY + lineHeight*2, 110, "left")
-    love.graphics.printf("E", centerX + 110, seedY + lineHeight*2, 110, "left")
-    
-    love.graphics.printf("Sweet Potato:", centerX, seedY + lineHeight*3, 110, "left")
-    love.graphics.printf("R", centerX + 110, seedY + lineHeight*3, 110, "left")
-    
-    -- ===== 中间区域：游戏提示 =====
-    love.graphics.setFont(headerFont)
-    love.graphics.setColor(1, 1, 0.3)
-    love.graphics.printf("Game Tips", centerX, seedY + lineHeight*4 + sectionSpace, 220, "left")
-    
-    love.graphics.setFont(contentFont)
-    love.graphics.setColor(1, 1, 1)
-    local tipsY = seedY + lineHeight*5 + sectionSpace
-    
-    love.graphics.printf("• Each action costs 1 point", centerX, tipsY, 220, "left")
-    love.graphics.printf("• Rainy days provide more water", centerX, tipsY + lineHeight, 220, "left")
-    love.graphics.printf("• Health decreases over time", centerX, tipsY + lineHeight*2, 220, "left")
-    love.graphics.printf("• Low health reduces actions", centerX, tipsY + lineHeight*3, 220, "left")
-    
-    -- ===== 右侧区域：游戏关卡 =====
-    love.graphics.setFont(headerFont)
-    love.graphics.setColor(1, 1, 0.3)
-    love.graphics.printf("Game Levels", rightX, startY, 220, "left")
-    
-    love.graphics.setFont(contentFont)
-    love.graphics.setColor(1, 1, 1)
-    local levelsY = startY + 25
-    
-    -- Level 1
-    love.graphics.printf("Level 1", rightX, levelsY, 220, "left")
-    love.graphics.printf("• 2x2 grid (4 plots)", rightX + 10, levelsY + lineHeight, 210, "left")
-    love.graphics.printf("• Goal: Harvest 1 of each crop", rightX + 10, levelsY + lineHeight*2, 210, "left")
-    
-    -- Level 2
-    love.graphics.printf("Level 2", rightX, levelsY + lineHeight*3 + sectionSpace, 220, "left")
-    love.graphics.printf("• 3x3 grid (9 plots)", rightX + 10, levelsY + lineHeight*4 + sectionSpace, 210, "left") 
-    love.graphics.printf("• Goal: Harvest 3 of each crop", rightX + 10, levelsY + lineHeight*5 + sectionSpace, 210, "left")
-    
-    -- Level 3
-    love.graphics.printf("Level 3", rightX, levelsY + lineHeight*6 + sectionSpace*2, 220, "left")
-    love.graphics.printf("• 4x4 grid (16 plots)", rightX + 10, levelsY + lineHeight*7 + sectionSpace*2, 210, "left")
-    love.graphics.printf("• Goal: Harvest 5 of each crop", rightX + 10, levelsY + lineHeight*8 + sectionSpace*2, 210, "left")
-    
-    -- ===== 右侧区域：作物信息 =====
-    love.graphics.setFont(headerFont)
-    love.graphics.setColor(1, 1, 0.3)
-    love.graphics.printf("Crop Information", rightX, levelsY + lineHeight*9 + sectionSpace*3, 220, "left")
-    
-    love.graphics.setFont(contentFont)
-    love.graphics.setColor(1, 1, 1)
-    local cropsY = levelsY + lineHeight*10 + sectionSpace*3
-    
-    love.graphics.printf("• Cabbage: Fast growth, medium water", rightX, cropsY, 220, "left")
-    love.graphics.printf("• Beans: Medium growth, low water", rightX, cropsY + lineHeight, 220, "left")
-    love.graphics.printf("• Maize: Slow growth, high water", rightX, cropsY + lineHeight*2, 220, "left")
-    love.graphics.printf("• Sweet Potato: Slowest, most water", rightX, cropsY + lineHeight*3, 220, "left")
-    
     -- 返回游戏提示
     love.graphics.setFont(smallFont)
     love.graphics.setColor(1, 0.7, 0.7)
-    love.graphics.printf("Press ESC to return to game", 0, screenHeight - 50, screenWidth, "center")
+    love.graphics.printf("Press ESC to return to game", 0, love.graphics.getHeight() - 50, love.graphics.getWidth(), "center")
+    
+    if helpSection == nil then
+        -- 显示主题列表
+        drawHelpTopics()
+    else
+        -- 显示所选主题的内容
+        drawHelpContent(helpSection)
+        
+        -- 返回按钮
+        love.graphics.setFont(smallFont)
+        love.graphics.setColor(0.9, 0.8, 0.3)
+        love.graphics.printf("Press BACKSPACE to return to topics", 0, love.graphics.getHeight() - 80, love.graphics.getWidth(), "center")
+    end
+end
+
+-- 绘制帮助主题列表
+function drawHelpTopics()
+    local topics = {
+        {title = "1. How to Play", id = "howtoplay"},
+        {title = "2. Basic Controls", id = "controls"},
+        {title = "3. Interface Controls", id = "interface"},
+        {title = "4. Seed Selection", id = "seeds"},
+        {title = "5. Game Levels", id = "levels"},
+        {title = "6. Crop Information", id = "crops"},
+        {title = "7. Game Tips", id = "tips"}
+    }
+    
+    -- 定义字体和颜色
+    local headerFont = love.graphics.newFont(24)
+    love.graphics.setFont(headerFont)
+    
+    -- 居中布局
+    local centerX = love.graphics.getWidth() / 2
+    local startY = 120
+    local lineHeight = 50
+    
+    -- 绘制主题列表
+    for i, topic in ipairs(topics) do
+        -- 检查鼠标是否悬停在这个主题上
+        local textWidth = headerFont:getWidth(topic.title)
+        local textX = centerX - textWidth / 2
+        local textY = startY + (i-1) * lineHeight
+        local mouseX, mouseY = love.mouse.getPosition()
+        
+        if mouseX >= textX and mouseX <= textX + textWidth and 
+           mouseY >= textY and mouseY <= textY + headerFont:getHeight() then
+            -- 鼠标悬停时高亮显示
+            love.graphics.setColor(1, 1, 0)
+            
+            -- 更新悬停的主题ID，用于点击处理
+            helpTopicHover = topic.id
+        else
+            love.graphics.setColor(0.9, 0.9, 0.7)
+        end
+        
+        -- 绘制主题文本
+        love.graphics.printf(topic.title, 0, textY, love.graphics.getWidth(), "center")
+    end
+    
+    -- 提示文本
+    love.graphics.setFont(smallFont)
+    love.graphics.setColor(0.7, 0.7, 0.9)
+    love.graphics.printf("Click on a topic to view details", 0, startY + #topics * lineHeight + 20, love.graphics.getWidth(), "center")
+end
+
+-- 绘制特定主题的内容
+function drawHelpContent(section)
+    local headerFont = love.graphics.newFont(20)
+    local contentFont = love.graphics.newFont(16)
+    love.graphics.setFont(headerFont)
+    
+    -- 各部分内容
+    if section == "howtoplay" then
+        -- 如何游戏部分
+        love.graphics.setColor(1, 1, 0.3)
+        love.graphics.printf("How to Play", 0, 100, love.graphics.getWidth(), "center")
+        
+        love.graphics.setFont(contentFont)
+        love.graphics.setColor(1, 1, 1)
+        local startY = 150
+        local lineHeight = 35
+        
+        local steps = {
+            "1. Plant seeds in empty plots",
+            "2. Water your plants daily",
+            "3. Harvest mature crops",
+            "4. Sell crops at the warehouse",
+            "5. Buy new seeds at the shop",
+            "6. Cook meals in the kitchen to restore health"
+        }
+        
+        for i, step in ipairs(steps) do
+            love.graphics.printf(step, 100, startY + (i-1) * lineHeight, love.graphics.getWidth() - 200, "left")
+        end
+        
+    elseif section == "controls" then
+        -- 基本控制部分
+        love.graphics.setColor(1, 1, 0.3)
+        love.graphics.printf("Basic Controls", 0, 100, love.graphics.getWidth(), "center")
+        
+        love.graphics.setFont(contentFont)
+        love.graphics.setColor(1, 1, 1)
+        local startY = 150
+        local lineHeight = 40
+        
+        local controls = {
+            {"Movement:", "Arrow Keys"},
+            {"Plant/Harvest:", "SPACE"},
+            {"Water Plant:", "F"},
+            {"Next Day:", "N"},
+            {"Kitchen Menu:", "K"}
+        }
+        
+        for i, control in ipairs(controls) do
+            love.graphics.printf(control[1], 200, startY + (i-1) * lineHeight, 200, "left")
+            love.graphics.printf(control[2], 400, startY + (i-1) * lineHeight, 200, "left")
+        end
+        
+    elseif section == "interface" then
+        -- 界面控制部分
+        love.graphics.setColor(1, 1, 0.3)
+        love.graphics.printf("Interface Controls", 0, 100, love.graphics.getWidth(), "center")
+        
+        love.graphics.setFont(contentFont)
+        love.graphics.setColor(1, 1, 1)
+        local startY = 150
+        local lineHeight = 40
+        
+        local controls = {
+            {"Shop:", "S"},
+            {"Warehouse:", "C"},
+            {"Help Screen:", "H"},
+            {"Back/Cancel:", "ESC"},
+            {"Watering Mode:", "T"}
+        }
+        
+        for i, control in ipairs(controls) do
+            love.graphics.printf(control[1], 200, startY + (i-1) * lineHeight, 200, "left")
+            love.graphics.printf(control[2], 400, startY + (i-1) * lineHeight, 200, "left")
+        end
+        
+    elseif section == "seeds" then
+        -- 种子选择部分
+        love.graphics.setColor(1, 1, 0.3)
+        love.graphics.printf("Seed Selection", 0, 100, love.graphics.getWidth(), "center")
+        
+        love.graphics.setFont(contentFont)
+        love.graphics.setColor(1, 1, 1)
+        local startY = 150
+        local lineHeight = 40
+        
+        local seeds = {
+            {"Cabbage:", "Q"},
+            {"Beans:", "W"},
+            {"Maize:", "E"},
+            {"Sweet Potato:", "R"}
+        }
+        
+        for i, seed in ipairs(seeds) do
+            love.graphics.printf(seed[1], 200, startY + (i-1) * lineHeight, 200, "left")
+            love.graphics.printf(seed[2], 400, startY + (i-1) * lineHeight, 200, "left")
+        end
+        
+    elseif section == "levels" then
+        -- 游戏关卡部分
+        love.graphics.setColor(1, 1, 0.3)
+        love.graphics.printf("Game Levels", 0, 100, love.graphics.getWidth(), "center")
+        
+        love.graphics.setFont(contentFont)
+        love.graphics.setColor(1, 1, 1)
+        local startY = 150
+        local lineHeight = 35
+        
+        -- Level 1
+        love.graphics.setColor(0.9, 0.9, 0.4)
+        love.graphics.printf("Level 1", 100, startY, 300, "left")
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("• 2x2 grid (4 plots)", 120, startY + lineHeight, 600, "left")
+        love.graphics.printf("• Goal: Harvest 1 of each crop", 120, startY + lineHeight*2, 600, "left")
+        
+        -- Level 2
+        love.graphics.setColor(0.9, 0.9, 0.4)
+        love.graphics.printf("Level 2", 100, startY + lineHeight*3.5, 300, "left")
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("• 3x3 grid (9 plots)", 120, startY + lineHeight*4.5, 600, "left")
+        love.graphics.printf("• Goal: Harvest 3 of each crop", 120, startY + lineHeight*5.5, 600, "left")
+        
+        -- Level 3
+        love.graphics.setColor(0.9, 0.9, 0.4)
+        love.graphics.printf("Level 3", 100, startY + lineHeight*7, 300, "left")
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("• 4x4 grid (16 plots)", 120, startY + lineHeight*8, 600, "left")
+        love.graphics.printf("• Goal: Harvest 5 of each crop", 120, startY + lineHeight*9, 600, "left")
+        
+    elseif section == "crops" then
+        -- 作物信息部分
+        love.graphics.setColor(1, 1, 0.3)
+        love.graphics.printf("Crop Information", 0, 100, love.graphics.getWidth(), "center")
+        
+        love.graphics.setFont(contentFont)
+        love.graphics.setColor(1, 1, 1)
+        local startY = 150
+        local lineHeight = 35
+        
+        local cropInfo = {
+            "• Cabbage: Fast growth (2 days), medium water needs (4), value: 15",
+            "• Beans: Medium growth (3 days), low water needs (2), value: 30",
+            "• Maize: Slow growth (4 days), high water needs (6), value: 50",
+            "• Sweet Potato: Slowest growth (5 days), highest water needs (8), value: 70"
+        }
+        
+        for i, info in ipairs(cropInfo) do
+            love.graphics.printf(info, 100, startY + (i-1) * lineHeight*1.5, love.graphics.getWidth() - 200, "left")
+        end
+        
+        -- 增加浇水提示
+        love.graphics.setColor(0.7, 1, 0.7)
+        love.graphics.printf("Remember to water plants according to their needs!", 100, startY + #cropInfo * lineHeight*1.5 + 20, love.graphics.getWidth() - 200, "left")
+        love.graphics.printf("Each crop has a daily watering limit. Overwatering wastes resources.", 100, startY + #cropInfo * lineHeight*1.5 + 60, love.graphics.getWidth() - 200, "left")
+        
+    elseif section == "tips" then
+        -- 游戏提示部分
+        love.graphics.setColor(1, 1, 0.3)
+        love.graphics.printf("Game Tips", 0, 100, love.graphics.getWidth(), "center")
+        
+        love.graphics.setFont(contentFont)
+        love.graphics.setColor(1, 1, 1)
+        local startY = 150
+        local lineHeight = 35
+        
+        local tips = {
+            "• Each action costs 1 point",
+            "• Rainy days provide more water (100 vs 80 on sunny days)",
+            "• Health decreases by 5 points each day",
+            "• Low health (below 30) reduces action points to 10",
+            "• At 0 health, you cannot take any actions",
+            "• Cook meals in the kitchen to restore health",
+            "• The daily recommended meal provides 20% more health restoration",
+            "• Water will be used up faster with high-water-need crops",
+            "• When water depletes below 5, you automatically advance to next day"
+        }
+        
+        for i, tip in ipairs(tips) do
+            love.graphics.printf(tip, 100, startY + (i-1) * lineHeight, love.graphics.getWidth() - 200, "left")
+        end
+    end
 end
 
 function drawDayPopup()
@@ -1021,12 +1130,12 @@ function drawWinPopup()
     love.graphics.setFont(font)
     love.graphics.setColor(1, 1, 1, popupAlpha)
     love.graphics.printf("CONGRATULATIONS!", popupX, popupY + 40, popupWidth, "center")
-    love.graphics.printf("You have completed all levels!", popupX, popupY + 90, popupWidth, "center")
+    love.graphics.printf("Great job planting and harvesting! Keep growing—food security starts with you!", popupX, popupY + 90, popupWidth, "center")
     
     -- 继续提示
     love.graphics.setFont(tinyFont)
     love.graphics.setColor(0.9, 0.9, 0.2, math.sin(love.timer.getTime() * 5) * 0.5 + 0.5 * popupAlpha)
-    love.graphics.printf("Press any key to continue", popupX, popupY + 180, popupWidth, "center")
+    love.graphics.printf("Press any key to continue", popupX, popupY + 230, popupWidth, "center")
 end
 
 function drawKitchenPopup()
@@ -1473,11 +1582,20 @@ function love.keypressed(key)
         end
     elseif gameState == "help" then
         if key == "escape" then
-            if previousGameState then
-                gameState = previousGameState
+            if helpSection ~= nil then
+                -- 如果在章节页面，按ESC返回主题列表
+                helpSection = nil
             else
-                gameState = "game"
+                -- 如果在主题列表，按ESC返回游戏
+                if previousGameState then
+                    gameState = previousGameState
+                else
+                    gameState = "game"
+                end
             end
+        elseif key == "backspace" and helpSection ~= nil then
+            -- 按Backspace键也可以返回主题列表
+            helpSection = nil
         end
     end
 
@@ -1585,6 +1703,13 @@ function adjustQuantity(btn)
 end
 
 function love.mousepressed(x, y, button)
+      -- 添加帮助界面的鼠标点击处理
+      if gameState == "help" and button == 1 then
+        if helpSection == nil and helpTopicHover ~= nil then
+            -- 如果在主题列表页面点击了某个主题
+            helpSection = helpTopicHover
+        end
+    end
     if gameState == "game" and button == 1 then
         local gridStartX = 250
         local gridStartY = 245
