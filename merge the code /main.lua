@@ -1036,7 +1036,7 @@ function drawKitchenPopup()
 
     -- 今日特餐
     love.graphics.setFont(contentFont)
-    love.graphics.printf("Today's Special Meal:", popupX, popupY + 70, popupWidth, "center")
+    love.graphics.printf("Today’s Recommended Menu:", popupX, popupY + 70, popupWidth, "center")
     love.graphics.setColor(0.7, 0.3, 0.1)
     love.graphics.printf(kitchenMenu.dailyMeal, popupX, popupY + 100, popupWidth, "center")
 
@@ -1354,6 +1354,54 @@ function love.keypressed(key)
                         local cropKey = plot.crop
                         local cropName = cropKey:gsub("_seed", "")
                         player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
+                        
+                        -- 检查是否满足通关条件（所有作物各5个）
+                        local allComplete = true
+                        for _, crop in ipairs({"Cabbage", "Beans", "Maize", "Sweet_Potato"}) do
+                            if (player.inventory[crop] or 0) < 5 then
+                                allComplete = false
+                                break
+                            end
+                        end
+                        
+                        if allComplete then
+                            -- 显示通关弹窗
+                            showWinPopup = true
+                            popupTimer = 0
+                            popupAlpha = 0
+                            popupFadeIn = true
+                        else
+                            -- 检查是否满足关卡升级条件
+                            if checkLevelUp() then
+                                gameLevel = gameLevel + 1
+                                levelPopupText = "Welcome to Level " .. gameLevel
+                                showLevelPopup = true
+                                popupTimer = 0
+                                popupAlpha = 0
+                                popupFadeIn = true
+                                
+                                -- 根据关卡解锁土地
+                                if gameLevel == 2 then
+                                    for x = 1, gridSize do
+                                        for y = 1, gridSize do
+                                            if x <= 3 and y <= 3 and grid[x][y].status == "locked" then
+                                                grid[x][y].status = "empty"
+                                            end
+                                        end
+                                    end
+                                elseif gameLevel == 3 then
+                                    for x = 1, gridSize do
+                                        for y = 1, gridSize do
+                                            if grid[x][y].status == "locked" then
+                                                grid[x][y].status = "empty"
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                        
+                        -- 清除格子
                         grid[nearPlotX][nearPlotY] = {
                             status = "empty",
                             crop = nil,
@@ -1363,11 +1411,11 @@ function love.keypressed(key)
                             dailyWateringCount = 0,
                             wateringProgress = 0
                         }
+                        
                         actionPoints = actionPoints - 1
                         if actionPoints <= 0 then
                             advanceToNextDay()
                         end
-                        checkLevelUp()
                     end
                 end
             end
