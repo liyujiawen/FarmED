@@ -15,7 +15,7 @@ function Animation:load()
                                          self.player.sprite:getWidth(), 
                                          self.player.sprite:getHeight(), 2, 5)
     
-    -- 计算缩放因子，使最终尺寸为64×64
+    -- 计算缩放因子，使最终尺寸为45×45
     self.player.scaleX = 45 / frameWidth
     self.player.scaleY = 45 / frameHeight
     
