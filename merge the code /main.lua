@@ -1,3 +1,5 @@
+local Animation = require("animation")
+
 function love.load()
     love.window.setTitle("FarmED - Welcome")
     love.graphics.setBackgroundColor(0.2, 0.6, 0.3) -- 绿色背景
@@ -8,7 +10,6 @@ function love.load()
     weather = "Sunny"
     water = 80
     maxWater = 100
-
 
     -- 加载背景图片
     background = love.graphics.newImage("art/background.png")
@@ -36,21 +37,7 @@ function love.load()
     gamebackground = background
 
     -- 加载角色图片和属性
-    characterData = {
-        img = love.graphics.newImage("art/character.png"),
-        x = 350,
-        y = 250,
-        speed = 120,
-        width = 64,
-        height = 64,
-        scale = 0.0625,  -- 64/1024 = 0.0625
-        direction = "down",
-        moving = false,
-        minX = 50,
-        maxX = love.graphics.getWidth() - 114,
-        minY = 70,
-        maxY = love.graphics.getHeight() - 130
-    }
+    Animation:load()
 
     -- 设置字体
     font = love.graphics.newFont(30)
@@ -242,44 +229,15 @@ function love.update(dt)
         actionPoints = 0
     end
 
-    -- Character movement logic - ADD THIS PART
     if gameState == "game" and not waterMode and not showDayPopup and not showLevelPopup and not showWinPopup then
         local dx, dy = 0, 0
-        characterData.moving = false
-        
-        -- Check WASD keys
-        if love.keyboard.isDown("up") then
-            dy = -characterData.speed * dt
-            characterData.direction = "up"
-            characterData.moving = true
-        end
-        if love.keyboard.isDown("down") then
-            dy = characterData.speed * dt
-            characterData.direction = "down"
-            characterData.moving = true
-        end
-        if love.keyboard.isDown("left") then
-            dx = -characterData.speed * dt
-            characterData.direction = "left"
-            characterData.moving = true
-        end
-        if love.keyboard.isDown("right") then
-            dx = characterData.speed * dt
-            characterData.direction = "right"
-            characterData.moving = true
-        end
-        
-        -- Apply movement with boundaries
-        if characterData.moving then
-            characterData.x = math.max(characterData.minX, math.min(characterData.x + dx, characterData.maxX))
-            characterData.y = math.max(characterData.minY, math.min(characterData.y + dy, characterData.maxY))
-        end
+        Animation:update(dt)
     end
 -- 检查是否靠近种子栏
         if gameState == "game" and not showDayPopup and not showLevelPopup and not showWinPopup then
 
         local inventoryY = love.graphics.getHeight() - 90  -- 种子栏的Y坐标
-        nearSeedBar = (characterData.y > inventoryY - 30 and characterData.y < inventoryY + 10)
+        nearSeedBar = (Animation.player.y > inventoryY - 30 and Animation.player.y < inventoryY + 10)
         
         -- 检查是否靠近地块
         local gridStartX = 250
@@ -294,8 +252,8 @@ function love.update(dt)
                 local cellX = gridStartX + (gridX-1) * (cellSize + padding)
                 local cellY = gridStartY + (gridY-1) * (cellSize + padding)
                 
-                local distance = math.sqrt((characterData.x - (cellX + cellSize/2))^2 + 
-                                          (characterData.y - (cellY + cellSize/2))^2)
+                local distance = math.sqrt((Animation.player.x - (cellX + cellSize/2))^2 + 
+                                          (Animation.player.y - (cellY + cellSize/2))^2)
                 
                 if distance < 30 then  -- 如果角色距离地块中心小于50像素
                     nearPlot = true
@@ -308,8 +266,8 @@ function love.update(dt)
         end
         
         -- 检查是否靠近厨房图标
-        local kitchenDistance = math.sqrt((characterData.x - kitchenIconX)^2 + 
-                                         (characterData.y - kitchenIconY)^2)
+        local kitchenDistance = math.sqrt((Animation.player.x - kitchenIconX)^2 + 
+                                         (Animation.player.y - kitchenIconY)^2)
         nearKitchen = (kitchenDistance < 50)
         
         -- 更新交互提示
@@ -428,6 +386,7 @@ function love.draw()
     love.graphics.getWidth() / gamebackground:getWidth(), 
     love.graphics.getHeight() / gamebackground:getHeight())
 
+
     if gameState == "menu" then
         drawMenu()
     elseif gameState == "game" then
@@ -435,7 +394,8 @@ function love.draw()
             drawWateringMode() -- 进入浇水界面
         else
             drawGame()
-            
+
+            Animation:draw()
             if gameState == "game" and not waterMode and showInteractionTip then
                 drawInteractionTip()
             end
@@ -507,7 +467,7 @@ function drawGame()
     drawGrid()
 
     -- Draw character
-    drawCharacter()
+    -- drawCharacter()
 
      -- 绘制厨房图标（简单的方块）
      love.graphics.setColor(0.9, 0.8, 0.5) -- 淡黄色厨房图标
@@ -1973,31 +1933,11 @@ function checkLevelUp()
     return true -- 允许升级到下一关
 end
 
--- New function to draw the character
-function drawCharacter()
-    -- Draw the character
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(
-        characterData.img,
-        characterData.x,
-        characterData.y,
-        0,
-        characterData.scale,
-        characterData.scale
-    )
-    
-    -- Debug info (remove in final version)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(tinyFont)
-    love.graphics.print("Position: " .. math.floor(characterData.x) .. ", " .. math.floor(characterData.y), 10, 80)
-    love.graphics.print("Direction: " .. characterData.direction, 10, 100)
-end
-
 function drawInteractionTip()
     -- 绘制交互提示
     if showInteractionTip and interactionTip ~= "" then
-        local tipX = characterData.x
-        local tipY = characterData.y - 30
+        local tipX = Animation.player.x
+        local tipY = Animation.player.y - 30
         
         -- 提示背景
         love.graphics.setColor(0, 0, 0, 0.7)
