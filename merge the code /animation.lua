@@ -17,7 +17,7 @@ function Animation:load()
     
     -- 计算缩放因子，使最终尺寸为45×45
     self.player.scaleX = 45 / frameWidth
-    self.player.scaleY = 45 / frameHeight
+    self.player.scaleY = 50 / frameHeight
     
     self.player.animations = {}
     self.player.animations.up = self.anim8.newAnimation(self.player.grid('1-3', 2), 0.2)
