@@ -5,7 +5,7 @@ function Animation:load()
     self.player = {}
     self.player.x = 550
     self.player.y = 400
-    self.player.speed = 3
+    self.player.speed = 1.5
     self.player.sprite = love.graphics.newImage("art/NewSprite.png")
     
     -- 计算每一帧的尺寸
@@ -16,8 +16,8 @@ function Animation:load()
                                          self.player.sprite:getHeight(), 2, 5)
     
     -- 计算缩放因子，使最终尺寸为64×64
-    self.player.scaleX = 50 / frameWidth
-    self.player.scaleY = 64 / frameHeight
+    self.player.scaleX = 45 / frameWidth
+    self.player.scaleY = 45 / frameHeight
     
     self.player.animations = {}
     self.player.animations.up = self.anim8.newAnimation(self.player.grid('1-3', 2), 0.2)
