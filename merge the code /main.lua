@@ -2,92 +2,92 @@ local Animation = require("animation")
 
 function love.load()
     love.window.setTitle("FarmED - Welcome")
-    love.graphics.setBackgroundColor(0.2, 0.6, 0.3) -- 绿色背景
+    love.graphics.setBackgroundColor(0.2, 0.6, 0.3) -- background
 
-    waterMode = false  -- 是否处于浇水模式
-    weatherTypes = {"Sunny", "Rainy"}  -- 可能的天气
-    -- 让游戏启动（第 1 天）时固定晴天
+    waterMode = false  -- Whether in watering mode or not
+    weatherTypes = {"Sunny", "Rainy"}  -- Possible weather
+    -- Make the game start (day 1) with a fixed sunny day
     weather = "Sunny"
     water = 80
     maxWater = 100
 
-    -- 加载背景图片
+    -- Load background image
     background = love.graphics.newImage("art/background.png")
     land4 = love.graphics.newImage("art/land16.png")
 
-    -- 加载作物图片, 加载三个阶段的图片
+    -- Load Crop Pictures, Load Three Stage Pictures
     cropImages = {
-        -- 卷心菜
+        -- CABBAGE
         Cabbage_seed = love.graphics.newImage("art/cabbage_seed.png"),
         Cabbage_mid = love.graphics.newImage("art/cabbage_mid.png"),
         Cabbage = love.graphics.newImage("art/cabbage.png"),
-        -- 豆子
+        -- BEANS
         Beans_seed = love.graphics.newImage("art/beans_seed.png"),
         Beans_mid = love.graphics.newImage("art/beans_mid.png"),
         Beans = love.graphics.newImage("art/beans.png"),
-        -- 玉米
+        -- MAIZE
         Maize_seed = love.graphics.newImage("art/maize_seed.png"),
         Maize_mid = love.graphics.newImage("art/maize_mid.png"),
         Maize = love.graphics.newImage("art/maize.png"),
-        -- 红薯
+        -- SWEET POTATO
         Sweet_Potato_seed = love.graphics.newImage("art/sweetpotato_seed.png"),
         Sweet_Potato_mid = love.graphics.newImage("art/sweetpotato_mid.png"),
         Sweet_Potato = love.graphics.newImage("art/sweetpotato.png")
     }
     gamebackground = background
 
-    -- 加载角色图片和属性
+    -- Load character images and attributes
     Animation:load()
 
-    -- 设置字体
+    -- Setting fonts
     font = love.graphics.newFont(30)
     smallFont = love.graphics.newFont(20)
     tinyFont = love.graphics.newFont(10)
     
-    -- 初始游戏状态
+    -- Initial game status
     gameState = "menu"
-    previousGameState = nil  -- 添加记录前一个状态的变量
+    previousGameState = nil  -- Add variable to record previous state
     gameLevel = 1
 
-    -- 厨房相关变量
-    kitchenIconX = 650  -- 厨房图标X坐标
-    kitchenIconY = 150  -- 厨房图标Y坐标
-    showKitchenPopup = false -- 是否显示厨房弹窗
-    nearKitchen = false -- 是否靠近厨房
+    -- Kitchen-related variables
+    kitchenIconX = 650  -- Kitchen icon x-coordinate
+    kitchenIconY = 150  -- Kitchen icon y-coordinate
+    showKitchenPopup = false -- Whether to show kitchen pop-ups
+    nearKitchen = false -- Is it near the kitchen
 
-    -- 厨房菜单数据
+    -- Kitchen menu data
     kitchenMenu = {
-        dailyMeal = "Vegetable Soup"  -- 今日午餐，默认值
+        dailyMeal = "Vegetable Soup"  -- Lunch today, default
     }
 
-    -- 简化的菜单
+    -- menu
     possibleMeals = {
-        "Vegetable Soup",   -- 蔬菜汤
-        "Corn Porridge",    -- 玉米粥
-       "Roasted Sweet Potato",  -- 烤红薯
-        "Bean Stew",        -- 豆子炖菜
+        "Vegetable Soup",   
+        "Corn Porridge",    
+       "Roasted Sweet Potato",  
+        "Bean Stew",       
     }
     
     levelRequirements = {
-        {4, 1},  -- 第一关：4种作物各1个
-        {4, 3},  -- 第二关：4种作物各3个
-        {4, 5}   -- 第三关：4种作物各5个
+        {4, 1},  -- Level 1: 1 each of 4 crops
+        {4, 3},  -- Level 2: 3 each of 4 crops
+        {4, 5}   -- Level 3: 5 each of 4 crops
     }
     
-    levelPopupText = ""     -- 关卡弹窗文本
+    levelPopupText = ""     -- Level popup text
 
-    -- 游戏状态变量
+    -- game state variable
     day = 1
     money = 100
-    actionPoints = 20 -- 第一阶段有20个行动点
-    -- 交互提示相关变量
-    interactionTip = ""  -- 当前显示的交互提示
-    showInteractionTip = false  -- 是否显示交互提示
-    nearSeedBar = false  -- 是否靠近种子栏
-    nearPlot = false  -- 是否靠近地块
-    nearPlotX = 0  -- 靠近的地块X坐标
-    nearPlotY = 0  -- 靠近的地块Y坐标
-   -- weather = weatherTypes[math.random(1, #weatherTypes)] -- 随机天气
+    actionPoints = 20 -- Phase I has 20 action points
+    -- Interactive Cue Related Variables
+    interactionTip = ""  -- Currently displayed interaction prompts
+    showInteractionTip = false  -- Whether or not to show interactive prompts
+    nearSeedBar = false  -- Proximity to the seed bar
+    nearPlot = false  -- Proximity to parcels
+    nearPlotX = 0  -- X-coordinates
+    nearPlotY = 0  -- Y-coordinates
+   -- weather = weatherTypes[math.random(1, #weatherTypes)] -- random weather
     
     if weather == "Sunny" then
         water = 80
@@ -96,22 +96,22 @@ function love.load()
         maxWater = 100
     end
     
-    -- 农场网格（第一阶段4格）
-    gridSize = 4 -- 4x4 的网格
+    -- Farm Grid (Phase I, 4 Grids)
+    gridSize = 4 -- 4x4 Grids
     grid = {}
     for x = 1, gridSize do
         grid[x] = {}
         for y = 1, gridSize do
-            -- 左上角四格
+            -- Upper Left Quad
             if x >= 1 and x <= 2 and y >= 1 and y <= 2 then
                 grid[x][y] = {
-                    status = "empty",-- 初始状态为空地
-                    wateringLimit = 0,  -- 每天浇水上限
-                    dailyWateringCount = 0  -- 当天已浇水次数
+                    status = "empty",
+                    wateringLimit = 0,  
+                    dailyWateringCount = 0  
                 }
             else
                 grid[x][y] = {
-                    status = "locked",  -- 新增状态：锁定
+                    status = "locked",  -- locked
                     wateringLimit = 0,
                     dailyWateringCount = 0
                 }
@@ -119,7 +119,7 @@ function love.load()
         end
     end 
     
-    -- 基础作物数据（只添加UI，不实现功能）
+    -- Basic crop data (only UI)
     crops = {
         Cabbage_seed = {name = "Cabbage", growthTime = 2, waterNeed = 4, value = 15, dailyWateringLimit = 4},
         Beans_seed = {name = "Beans", growthTime = 3, waterNeed = 2, value = 30, dailyWateringLimit = 2},
@@ -127,9 +127,9 @@ function love.load()
         Sweet_Potato_seed = {name = "Sweet Potato", growthTime = 5, waterNeed = 8, value = 70, dailyWateringLimit = 8}
     }
     
-    selectedSeed = "Cabbage_seed" -- 默认选择卷心菜种子
+    selectedSeed = "Cabbage_seed" -- Default choice of cabbage seed
 
-    -- 玩家拥有的种子和资金（从shop.lua中继承）
+    -- Player-owned seeds and money 
     player = {
         kes = 10000.00,
         health = 100,
@@ -146,10 +146,10 @@ function love.load()
         }
     }
     
-    -- 商品数据（从shop.lua中继承）
+    -- Product data 
     shopItems = {
         { name = "Cabbage_seed", basePrice = 50.00 },
-        { name = "Sweet_Potato_seed",  basePrice = 80.00 }, -- 修正拼写错误
+        { name = "Sweet_Potato_seed",  basePrice = 80.00 }, 
         { name = "Maize_seed",   basePrice = 70.00 },
         { name = "Beans_seed", basePrice = 120.00 },
         { name = "Cabbage", basePrice = 100.00 },
@@ -158,9 +158,9 @@ function love.load()
         { name = "Beans", basePrice = 250.00 }
     }
     
-    -- 动态按钮位置（从shop.lua中继承）
+    -- Dynamic button positions
     buttonArea = {
-        x = 0, width = 320,  -- 总宽度=4按钮*80间距
+        x = 0, width = 320,  -- Total width = 4 buttons * 80 spacing
         buttons = {
             {text = "-5", offset = 0},
             {text = "-1", offset = 70},
@@ -171,17 +171,17 @@ function love.load()
     selectedItem = 1
     quantity = 1
     
-    -- 弹窗系统变量
-    showDayPopup = false     -- 是否显示天数弹窗
-    showLevelPopup = false  -- 是否显示关卡弹窗
-    showWinPopup = false     -- 是否显示通关弹窗
-    popupTimer = 0           -- 弹窗计时器
-    popupDuration = 2        -- 弹窗持续时间(秒)
-    newDayNumber = 1         -- 要在弹窗中显示的天数
-    popupAlpha = 0           -- 用于淡入淡出效果
-    popupFadeIn = true       -- 是否处于淡入阶段
+    -- popup system variable
+    showDayPopup = false     
+    showLevelPopup = false  
+    showWinPopup = false     
+    popupTimer = 0           
+    popupDuration = 2        
+    newDayNumber = 1         
+    popupAlpha = 0           
+    popupFadeIn = true      
 
-    -- 雨滴粒子初始化
+    -- Raindrop particle initialization
     raindrops = {}
     for i = 1, 100 do
         table.insert(raindrops, {
@@ -190,7 +190,7 @@ function love.load()
             speed = math.random(200, 400)
         })
     end
-    --  添加配方数据  --
+    --  Add recipe data  --
     recipes = {
         ["Vegetable Soup"] = {
             ingredients = { Cabbage = 1 },
@@ -209,22 +209,22 @@ function love.load()
             baseHealth = 40
         }
     }
-    --  配方数据添加完成 --
-    helpSection = nil  -- 当前选择的帮助章节
-    helpTopicHover = nil  -- 当前鼠标悬停的主题
+    --  Recipe data added --
+    helpSection = nil  -- Currently selected help section
+    helpTopicHover = nil  -- Current Mouse Hover Theme
 
-    -- 如果关卡弹窗激活，在最上层绘制
+    -- If the level popup is active, draw at the topmost level
     if showLevelPopup then
         drawLevelPopup()
     end
 end
 
 function love.update(dt)
-    -- 计算居中位置（从shop.lua中继承）
+    -- Calculate center position 
     local screenWidth = love.graphics.getWidth()
     buttonArea.x = (screenWidth - buttonArea.width) / 2
 
-       -- 检查健康值是否为0，如果是则清空行动点
+       -- Check if the health value is 0, if so clear the action points
        if player.health <= 0 then
         actionPoints = 0
     end
@@ -233,19 +233,19 @@ function love.update(dt)
         local dx, dy = 0, 0
         Animation:update(dt)
     end
--- 检查是否靠近种子栏
+-- Check for proximity to the seed bar
         if gameState == "game" and not showDayPopup and not showLevelPopup and not showWinPopup then
 
-        local inventoryY = love.graphics.getHeight() - 90  -- 种子栏的Y坐标
+        local inventoryY = love.graphics.getHeight() - 90  
         nearSeedBar = (Animation.player.y > inventoryY - 30 and Animation.player.y < inventoryY + 10)
         
-        -- 检查是否靠近地块
+        -- Check for proximity to plots
         local gridStartX = 250
         local gridStartY = 245
         local cellSize = 40
         local padding = 35
         
-        nearPlot = false  -- 重置靠近地块状态
+        nearPlot = false  -- Reset near parcel status
         
         for gridX = 1, gridSize do
             for gridY = 1, gridSize do
@@ -255,7 +255,7 @@ function love.update(dt)
                 local distance = math.sqrt((Animation.player.x - (cellX + cellSize/2))^2 + 
                                           (Animation.player.y - (cellY + cellSize/2))^2)
                 
-                if distance < 30 then  -- 如果角色距离地块中心小于50像素
+                if distance < 30 then  -- If the character is less than 30 pixels from the center of the plot
                     nearPlot = true
                     nearPlotX = gridX
                     nearPlotY = gridY
@@ -265,12 +265,12 @@ function love.update(dt)
             if nearPlot then break end
         end
         
-        -- 检查是否靠近厨房图标
+        -- Check for proximity to kitchen icons
         local kitchenDistance = math.sqrt((Animation.player.x - kitchenIconX)^2 + 
                                          (Animation.player.y - kitchenIconY)^2)
         nearKitchen = (kitchenDistance < 50)
         
-        -- 更新交互提示
+        -- Interactive Tips
         if nearKitchen then
             interactionTip = "Press K to view Kitchen Menu"
             showInteractionTip = true
@@ -286,7 +286,7 @@ function love.update(dt)
             elseif plot.status == "planted" then
                 interactionTip = "Press F to water"
                 showInteractionTip = true
-             -- 检查是否已经浇足够水
+             -- Check if you have watered enough
         if plot.dailyWateringCount >= plot.wateringLimit then
             interactionTip = "It's watered enough"
             showInteractionTip = true
@@ -308,7 +308,7 @@ function love.update(dt)
         end
     end
 
-    -- 处理 Day 弹窗计时和淡入淡出效果
+    -- Processing Day pop-up window timing and fade-in/out effects
     if showDayPopup then
         popupTimer = popupTimer + dt
 
@@ -326,7 +326,7 @@ function love.update(dt)
         end
     end
 
-    -- 处理关卡弹窗计时和淡入淡出效果
+    -- Handling level popup timing and fade-in/fade-out effects
     if showLevelPopup then
         popupTimer = popupTimer + dt
 
@@ -344,7 +344,7 @@ function love.update(dt)
         end
     end
 
-    -- 处理通关弹窗计时和淡入淡出效果
+    -- Handling pass popup timing and fade-in/fade-out effects
     if showWinPopup then
         popupTimer = popupTimer + dt
 
@@ -362,7 +362,7 @@ function love.update(dt)
         end
     end
 
-    -- 雨滴动画逻辑（Rainy 天气）
+    -- Raindrop Animation Logic (Rainy Weather)
     if weather == "Rainy" and raindrops then
         for _, drop in ipairs(raindrops) do
             drop.y = drop.y + drop.speed * dt
@@ -372,7 +372,7 @@ function love.update(dt)
             end
         end
     end
-    --  如果水少于5，自动跳转下一天
+    --  If water is less than 5, automatically skip to the next day
     if gameState == "game" and not showDayPopup and not showLevelPopup and not showWinPopup and water < 5 then
         advanceToNextDay()
     end
@@ -380,8 +380,8 @@ function love.update(dt)
 end
 
 function love.draw()
-    -- 先绘制背景
-    love.graphics.setColor(1, 1, 1) -- 确保背景图片颜色正确
+    -- draw background
+    love.graphics.setColor(1, 1, 1) 
     love.graphics.draw(gamebackground, 0, 0, 0, 
     love.graphics.getWidth() / gamebackground:getWidth(), 
     love.graphics.getHeight() / gamebackground:getHeight())
@@ -391,7 +391,7 @@ function love.draw()
         drawMenu()
     elseif gameState == "game" then
         if waterMode then
-            drawWateringMode() -- 进入浇水界面
+            drawWateringMode() -- Enter the watering screen
         else
             drawGame()
 
