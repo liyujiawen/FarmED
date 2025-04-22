@@ -408,34 +408,34 @@ function love.draw()
         drawHelp()
     end
     
-    -- 在最上层绘制厨房弹窗
+    -- Draw kitchen popup on top layer
     if showKitchenPopup then
         drawKitchenPopup()
     end
         
-    -- 如果弹窗激活，在最上层绘制弹窗
+   -- If popup is active, draw it on top layer
     if showDayPopup then
         drawDayPopup()
     end
-    -- 如果关卡弹窗激活，在最上层绘制
+    -- If level popup is active, draw it on top layer
     if showLevelPopup then
     drawLevelPopup()
     end
-    -- 如果通关弹窗激活，在最上层绘制
+    -- If win popup is active, draw it on top layer
     if showWinPopup then
         drawWinPopup()
     end
 
-    -- 如果是雨天则绘制雨滴
+    -- Draw raindrops if it's rainy
     if gameState == "game" and weather == "Rainy" then
         love.graphics.setColor(1, 1, 1, 0.4)
         for _, drop in ipairs(raindrops) do
             love.graphics.line(drop.x, drop.y, drop.x, drop.y + 10)
         end
     end
-    -- 雨天整体暗色滤镜
+    -- Apply overall dark filter for rainy weather
     if gameState == "game" and weather == "Rainy" then
-        love.graphics.setColor(0, 0, 0, 0.4)  -- 半透明黑色遮罩
+        love.graphics.setColor(0, 0, 0, 0.4)  -- Semi-transparent black overlay
         love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     end 
 end
@@ -448,75 +448,75 @@ function drawMenu()
     love.graphics.setFont(smallFont)
     love.graphics.printf("Sustainable Agriculture Education Game", 0, 220, love.graphics.getWidth(), "center")
     
-    -- 菜单选项
+    -- Menu options
     love.graphics.setColor(1, 0.9, 0.7)
     love.graphics.printf("Press ENTER to Start Game", 0, 300, love.graphics.getWidth(), "center")
     love.graphics.printf("Press H for Help", 0, 340, love.graphics.getWidth(), "center")
     
-    -- 版本信息
+    -- Version information
     love.graphics.setFont(tinyFont)
     love.graphics.setColor(0.8, 0.8, 0.8)
     love.graphics.printf("Current Version: Stage 1 - Basic Farming", 0, 450, love.graphics.getWidth(), "center")
 end
 
 function drawGame()
-    -- 顶部状态栏
+    -- Top status bar
     drawStatusBar()
     
-    -- 农场网格
+    -- Farm grid
     drawGrid()
 
     -- Draw character
     -- drawCharacter()
 
-     -- 绘制厨房图标（简单的方块）
-     love.graphics.setColor(0.9, 0.8, 0.5) -- 淡黄色厨房图标
+     -- Draw kitchen icon (simple block)
+     love.graphics.setColor(0.9, 0.8, 0.5) -- Light yellow kitchen icon
      love.graphics.rectangle("fill", kitchenIconX, kitchenIconY, 40, 40)
-     love.graphics.setColor(0.6, 0.5, 0.3) -- 棕色边框
+     love.graphics.setColor(0.6, 0.5, 0.3) -- Brown border
      love.graphics.rectangle("line", kitchenIconX, kitchenIconY, 40, 40)
      love.graphics.setFont(tinyFont)
-     love.graphics.setColor(0.3, 0.2, 0.1) -- 深棕色文字
+     love.graphics.setColor(0.3, 0.2, 0.1) -- Dark brown text
      love.graphics.printf("Kitchen", kitchenIconX, kitchenIconY + 15, 40, "center")
     
-    -- 底部控制栏
+    -- Bottom control bar
     drawControlBar()
 end
 
 function drawStatusBar()
-    -- 增加状态栏高度到50像素，使其更宽敞
+    -- Increase status bar height to 50 pixels to make it more spacious
     love.graphics.setColor(0, 0, 0, 0.7)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), 70)
     
-    -- 设置字体和颜色
+    -- Set font and color
     love.graphics.setFont(smallFont)
     love.graphics.setColor(1, 1, 1)
     
-    -- 计算每个状态项的宽度
+    -- Calculate width for each status item
     local screenWidth = love.graphics.getWidth()
     local itemWidth = screenWidth / 5
     
-    -- 均匀分布五个状态项，使用居中对齐
+    -- Evenly distribute five status items, using center alignment
     love.graphics.printf("Day " .. day, 0, 15, itemWidth, "center")
     love.graphics.printf("Balance: " .. formatKES(player.kes), itemWidth, 15, itemWidth, "center")
     love.graphics.printf("Action Points: " .. actionPoints .. "/20", itemWidth*2, 15, itemWidth, "center")
     love.graphics.printf("Weather: " .. weather, itemWidth*3, 15, itemWidth, "center")
     love.graphics.printf("Water: " .. water, itemWidth*4, 15, itemWidth, "center")
-      -- 健康值显示 - 根据健康值设置不同颜色
+      -- Health display - set different colors based on health value
       if player.health <= 0 then
-        love.graphics.setColor(1, 0, 0) -- 红色表示严重饥饿
+        love.graphics.setColor(1, 0, 0) -- Red indicates severe hunger
     elseif player.health < 30 then
-        love.graphics.setColor(1, 0.5, 0) -- 橙色表示警告
+        love.graphics.setColor(1, 0.5, 0) -- Orange indicates warning
     else
-        love.graphics.setColor(0.2, 1, 0.2) -- 绿色表示健康
+        love.graphics.setColor(0.2, 1, 0.2) -- Green indicates health
     end
     love.graphics.printf("Health: " .. player.health, 0, 40, itemWidth, "center")  -- X=0对齐Day，Y=40
     
-    -- 如果健康值为0，显示饥饿警告
+    -- If health is 0, display hunger warning
     if player.health <= 0 then
-        love.graphics.setColor(1, 0, 0) -- 红色警告
+        love.graphics.setColor(1, 0, 0) 
         love.graphics.printf("STARVING! CANNOT TAKE ACTIONS!", 0, 70, screenWidth, "center")
     end
-    love.graphics.setColor(1, 1, 1)  -- 恢复默认白色
+    love.graphics.setColor(1, 1, 1)  -- Restore default white color
 end
 
 function drawGrid()
@@ -528,13 +528,13 @@ function drawGrid()
 
     love.graphics.setFont(tinyFont)
 
-     -- 预加载锁图标（仅在第一次运行时加载）
+     -- Preload lock icon (only load on first run)
      if not lockIcon then
         lockIcon = love.graphics.newImage("art/lock.png")
-        -- 动态计算锁图标缩放比例
+        -- Dynamically calculate lock icon scaling ratio
         lockIconScale = math.min(
-            (cellSize * 1.3) / lockIcon:getWidth(),  -- 按宽度比例
-            (cellSize * 1.3) / lockIcon:getHeight()  -- 按高度比例
+            (cellSize * 1.3) / lockIcon:getWidth(),  -- According to width ratio
+            (cellSize * 1.3) / lockIcon:getHeight()  -- According to height ratio
         )
     end
 
@@ -543,40 +543,40 @@ function drawGrid()
             local cellX = gridStartX + (x-1) * (cellSize + padding)
             local cellY = gridStartY + (y-1) * (cellSize + padding)
             
-            -- 绘制土地格子
-            -- 统一设定：所有土地格子完全透明（不绘制底色和边框）
-            -- 仅未解锁土地显示锁图标
+            -- Draw land grid
+            -- Unified setting: all land grids completely transparent (no base color or border)
+            -- Only locked land displays lock icon
             if grid[x][y].status == "locked" then
-                -- 计算锁图标居中位置（精确到像素）
+                -- Calculate lock icon center position (accurate to pixel)
                 local lockW = lockIcon:getWidth() * lockIconScale
                 local lockH = lockIcon:getHeight() * lockIconScale
                 local lockX = cellX + (cellSize - lockW) / 2
                 local lockY = cellY + (cellSize - lockH) / 2
                 
-                -- 绘制锁图标（浅灰色，60%透明度）
+                -- Draw lock icon (light gray, 60% transparency)
                 love.graphics.setColor(0.8, 0.8, 0.8, 0.6)
                 love.graphics.draw(lockIcon, lockX, lockY, 0, lockIconScale, lockIconScale)
             end
             
-            -- 作物和进度条绘制
+            -- Crop and progress bar drawing
             if grid[x][y].status == "planted" or grid[x][y].status == "matured" then  
                 local plot = grid[x][y]
                 local cropKey = plot.crop
 
-                -- 绘制作物图片
+                -- Draw crop image
                 if cropKey and cropImages then
                     local img
                     local plot = grid[x][y]
                     
-                    -- 根据生长阶段选择不同的图片
+                    -- Select different images based on growth stage
                     if plot.status == "matured" then
-                        -- 成熟阶段使用不带"_seed"后缀的图片名
+                        -- Mature stage uses image name without "_seed" suffix
                         img = cropImages[cropKey:gsub("_seed", "")]
                     elseif plot.growth / crops[cropKey].growthTime >= 0.5 then
-                        -- 中期阶段使用带"_mid"后缀的图片名
+                        -- Middle stage uses image name with "_mid" suffix
                         img = cropImages[cropKey:gsub("_seed", "_mid")]
                     else
-                        -- 种子阶段使用原图片
+                        -- Seed stage uses original image
                         img = cropImages[cropKey]
                     end
                     
@@ -590,22 +590,22 @@ function drawGrid()
                     end
                 end
 
-                -- 绘制双进度条（调整到格子顶部边缘）
+                -- Draw dual progress bars (adjusted to the top edge of the grid)
                 local cropData = crops[cropKey]
                 if cropData then
                     local barWidth = cellSize - 4
                     local barHeight = 3
                     local barX = cellX + 2
-                    local barY = cellY - 8  -- 移到格子外顶部
+                    local barY = cellY - 8  
 
-                    -- 水分进度条（蓝色，带半透明背景）
+                    -- Water progress bar (blue, with semi-transparent background)
                     love.graphics.setColor(0, 0, 0, 0.5)
                     love.graphics.rectangle("fill", barX, barY, barWidth, barHeight)
                     love.graphics.setColor(0.2, 0.5, 1)
-                    -- 使用 wateringProgress 来显示浇水进度
+                    -- Use wateringProgress to display watering progress
                     love.graphics.rectangle("fill", barX, barY, barWidth * math.min(plot.wateringProgress / cropData.dailyWateringLimit, 1), barHeight)
 
-                    -- 成熟进度条（绿色，在上方）
+                    -- Maturity progress bar (green, above)
                     love.graphics.setColor(0, 0, 0, 0.5)
                     love.graphics.rectangle("fill", barX, barY - 5, barWidth, barHeight)
                     love.graphics.setColor(0.3, 0.9, 0.3)
@@ -617,51 +617,51 @@ function drawGrid()
 end
 
 function drawControlBar()
-    -- 确保barY有值，通过本地定义而不是依赖全局变量
+    -- Ensure barY has a value, defined locally rather than depending on global variables
     local barY = love.graphics.getHeight() - 60
     
-    -- 控制栏背景
+    -- Control bar background
     love.graphics.setColor(0, 0, 0, 0.7)
     love.graphics.rectangle("fill", 0, barY, love.graphics.getWidth(), 60)
     
-    -- 控制按钮
+    -- Control buttons
     love.graphics.setFont(smallFont)
     love.graphics.setColor(1, 1, 1)
     
-    -- 下一天按钮
+    -- Next day button
     love.graphics.printf("[N] Next Day", 20, barY + 15, 150, "left")
     
-    -- 商店按钮
+    -- Shop button
     love.graphics.printf("[S] Shop", 200, barY + 15, 150, "left")
     
-    -- 仓库按钮
+    -- Warehouse button
     love.graphics.printf("[C] Warehouse", 320, barY + 15, 150, "left")
     
-    -- 帮助按钮
+    -- Help button
     love.graphics.printf("[H] Help", 500, barY + 15, 150, "left")
 
-    --浇水
+    -- Watering
     love.graphics.printf("[T] Enter Watering Mode", 610, barY + 15, 200, "left")
     
-    -- 种子库存栏
+    -- Seed inventory bar
     local inventoryY = barY - 30
     love.graphics.setColor(0, 0, 0, 0.6)
     love.graphics.rectangle("fill", 0, inventoryY, love.graphics.getWidth(), 30)
     
-    -- 种子图标和数量
+    -- Seed icons and quantities
     local seedKeys = {"Cabbage_seed", "Beans_seed", "Maize_seed", "Sweet_Potato_seed"}
     local seedLabels = {"[Q] Cabbage", "[W] Beans", "[E] Maize", "[R] Sweet Potato"}
     local startX = 20
     local iconSpacing = 160
     
     for i, key in ipairs(seedKeys) do
-        -- 高亮当前选中的种子
+        -- Highlight currently selected seed
         if key == selectedSeed then
             love.graphics.setColor(1, 0.8, 0, 0.6)
             love.graphics.rectangle("fill", startX + (i-1) * iconSpacing - 5, inventoryY, 150, 30)
         end
         
-        -- 显示种子图标
+        -- Display seed icon
         if cropImages and cropImages[key] then
             love.graphics.setColor(1, 1, 1)
             local iconSize = 20
@@ -669,34 +669,34 @@ function drawControlBar()
             love.graphics.draw(cropImages[key], startX + (i-1) * iconSpacing, inventoryY + 5, 0, imgScale, imgScale)
         end
         
-        -- 显示种子名称和数量
+        -- Display seed name and quantity
         love.graphics.setColor(1, 1, 1)
         love.graphics.setFont(tinyFont)
         love.graphics.print(seedLabels[i] .. ": " .. (player.inventory[key] or 0), startX + (i-1) * iconSpacing + 25, inventoryY + 8)
     end
 end
 
--- 从shop.lua继承的交易界面函数
+-- Transaction interface function inherited from shop.lua
 function drawTransactionInterface(title, isShop)
-    -- 半透明背景面板
+    -- Semi-transparent background panel
     love.graphics.setColor(0.1, 0.1, 0.1, 0.85)
     love.graphics.rectangle("fill", 50, 80, 700, 500, 10)
 
-    -- 标题
+    -- Title
     love.graphics.setColor(0.9, 0.9, 0.2)
     love.graphics.setFont(font)
     love.graphics.printf(title, 50, 100, 700, "center")
 
-    -- 商品列表
+    -- Item list
     love.graphics.setFont(smallFont)
     local items = filterItems(isShop)
     for i, item in ipairs(items) do
         local yPos = 160 + (i-1)*55
-        -- 选中高亮
+        -- Selection highlight
         love.graphics.setColor(i == selectedItem and {1,0.8,0,0.3} or {0,0,0,0})
         love.graphics.rectangle("fill", 60, yPos-5, 680, 45, 5)
         
-        -- 商品信息
+        -- Item information
         love.graphics.setColor(1,1,1)
         local displayName = item.name:gsub("_", " "):upper()
         love.graphics.printf(displayName, 80, yPos, 300, "left")
@@ -704,21 +704,21 @@ function drawTransactionInterface(title, isShop)
         love.graphics.printf("Stock: "..(player.inventory[item.name] or 0), 620, yPos, 100, "right")
     end
 
-    -- 居中控制面板
+    -- Centered control panel
     drawControlPanel(isShop and "B - Confirm Buy" or "S - Confirm Sell")
     love.graphics.setFont(smallFont)
     love.graphics.setColor(0.9, 0.9, 0.2)
     local balanceText = "Balance: "..formatKES(player.kes)
-    love.graphics.printf(balanceText, 60, 540, 300, "left")  -- 位置：X60,Y520
+    love.graphics.printf(balanceText, 60, 540, 300, "left")  -- Position: X60,Y520
 end
 
--- 从shop.lua继承的控制面板函数
+-- Inherited control panel function from shop.lua
 function drawControlPanel(actionText)
-    -- 按钮背景
+    -- Button background
     love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
     love.graphics.rectangle("fill", buttonArea.x-30, 390, buttonArea.width+10, 65, 5)
 
-    -- 数量按钮
+    -- Quantity buttons
     love.graphics.setFont(smallFont)
     for _, btn in ipairs(buttonArea.buttons) do
         local btnX = buttonArea.x + btn.offset
@@ -728,41 +728,41 @@ function drawControlPanel(actionText)
         love.graphics.printf(btn.text, btnX, 410, 60, "center")
     end
 
-    -- 数量显示
+    -- Quantity display
     love.graphics.printf("QUANTITY: "..quantity, buttonArea.x, 470, buttonArea.width, "center")
     love.graphics.printf(actionText.."\nESC - Cancel", buttonArea.x, 490, buttonArea.width, "center")
 end
 
 function drawHelp()
-    -- 创建深色半透明背景
+    -- Create dark semi-transparent background
     love.graphics.setColor(0, 0, 0, 0.9)
     love.graphics.rectangle("fill", 20, 20, love.graphics.getWidth() - 40, love.graphics.getHeight() - 40, 10)
     
-    -- 标题
-    love.graphics.setFont(font) -- 使用现有的主字体
+    -- Title
+    love.graphics.setFont(font) -- Use existing main font
     love.graphics.setColor(1, 1, 0.8)
     love.graphics.printf("FarmED - Game Guide", 0, 40, love.graphics.getWidth(), "center")
     
-    -- 返回游戏提示
+    -- Return to game prompt
     love.graphics.setFont(smallFont)
     love.graphics.setColor(1, 0.7, 0.7)
     love.graphics.printf("Press ESC to return to game", 0, love.graphics.getHeight() - 50, love.graphics.getWidth(), "center")
     
     if helpSection == nil then
-        -- 显示主题列表
+        -- Display topic list
         drawHelpTopics()
     else
-        -- 显示所选主题的内容
+        -- Display content of selected topic
         drawHelpContent(helpSection)
         
-        -- 返回按钮
+        -- Back button
         love.graphics.setFont(smallFont)
         love.graphics.setColor(0.9, 0.8, 0.3)
         love.graphics.printf("Press BACKSPACE to return to topics", 0, love.graphics.getHeight() - 80, love.graphics.getWidth(), "center")
     end
 end
 
--- 绘制帮助主题列表
+-- Draw help topic list
 function drawHelpTopics()
     local topics = {
         {title = "1. How to Play", id = "howtoplay"},
@@ -774,18 +774,18 @@ function drawHelpTopics()
         {title = "7. Game Tips", id = "tips"}
     }
     
-    -- 定义字体和颜色
+    -- Define font and color
     local headerFont = love.graphics.newFont(24)
     love.graphics.setFont(headerFont)
     
-    -- 居中布局
+    -- Centered layout
     local centerX = love.graphics.getWidth() / 2
     local startY = 120
     local lineHeight = 50
     
-    -- 绘制主题列表
+    -- Draw topic list
     for i, topic in ipairs(topics) do
-        -- 检查鼠标是否悬停在这个主题上
+        -- Check if mouse is hovering over this topic
         local textWidth = headerFont:getWidth(topic.title)
         local textX = centerX - textWidth / 2
         local textY = startY + (i-1) * lineHeight
