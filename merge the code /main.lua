@@ -793,34 +793,34 @@ function drawHelpTopics()
         
         if mouseX >= textX and mouseX <= textX + textWidth and 
            mouseY >= textY and mouseY <= textY + headerFont:getHeight() then
-            -- 鼠标悬停时高亮显示
+            -- Highlight when the mouse hovers
             love.graphics.setColor(1, 1, 0)
             
-            -- 更新悬停的主题ID，用于点击处理
+            -- Update the hover theme ID for click processing
             helpTopicHover = topic.id
         else
             love.graphics.setColor(0.9, 0.9, 0.7)
         end
         
-        -- 绘制主题文本
+        -- Draw the theme text
         love.graphics.printf(topic.title, 0, textY, love.graphics.getWidth(), "center")
     end
     
-    -- 提示文本
+    -- Prompt text
     love.graphics.setFont(smallFont)
     love.graphics.setColor(0.7, 0.7, 0.9)
     love.graphics.printf("Click on a topic to view details", 0, startY + #topics * lineHeight + 20, love.graphics.getWidth(), "center")
 end
 
--- 绘制特定主题的内容
+-- Draw the content of a specific topic
 function drawHelpContent(section)
     local headerFont = love.graphics.newFont(20)
     local contentFont = love.graphics.newFont(16)
     love.graphics.setFont(headerFont)
     
-    -- 各部分内容
+    -- Contents of each part
     if section == "howtoplay" then
-        -- 如何游戏部分
+        -- How to Play the game section
         love.graphics.setColor(1, 1, 0.3)
         love.graphics.printf("How to Play", 0, 100, love.graphics.getWidth(), "center")
         
@@ -843,7 +843,7 @@ function drawHelpContent(section)
         end
         
     elseif section == "controls" then
-        -- 基本控制部分
+        -- Basic control section
         love.graphics.setColor(1, 1, 0.3)
         love.graphics.printf("Basic Controls", 0, 100, love.graphics.getWidth(), "center")
         
@@ -866,7 +866,7 @@ function drawHelpContent(section)
         end
         
     elseif section == "interface" then
-        -- 界面控制部分
+        -- Interface control section
         love.graphics.setColor(1, 1, 0.3)
         love.graphics.printf("Interface Controls", 0, 100, love.graphics.getWidth(), "center")
         
@@ -889,7 +889,7 @@ function drawHelpContent(section)
         end
         
     elseif section == "seeds" then
-        -- 种子选择部分
+        -- Seed selection section
         love.graphics.setColor(1, 1, 0.3)
         love.graphics.printf("Seed Selection", 0, 100, love.graphics.getWidth(), "center")
         
@@ -911,7 +911,7 @@ function drawHelpContent(section)
         end
         
     elseif section == "levels" then
-        -- 游戏关卡部分
+        -- Game level section
         love.graphics.setColor(1, 1, 0.3)
         love.graphics.printf("Game Levels", 0, 100, love.graphics.getWidth(), "center")
         
@@ -942,7 +942,7 @@ function drawHelpContent(section)
         love.graphics.printf("• Goal: Harvest 5 of each crop", 120, startY + lineHeight*9, 600, "left")
         
     elseif section == "crops" then
-        -- 作物信息部分
+        -- Crop information section
         love.graphics.setColor(1, 1, 0.3)
         love.graphics.printf("Crop Information", 0, 100, love.graphics.getWidth(), "center")
         
@@ -962,13 +962,13 @@ function drawHelpContent(section)
             love.graphics.printf(info, 100, startY + (i-1) * lineHeight*1.5, love.graphics.getWidth() - 200, "left")
         end
         
-        -- 增加浇水提示
+        -- Add watering tips
         love.graphics.setColor(0.7, 1, 0.7)
         love.graphics.printf("Remember to water plants according to their needs!", 100, startY + #cropInfo * lineHeight*1.5 + 20, love.graphics.getWidth() - 200, "left")
         love.graphics.printf("Each crop has a daily watering limit. Overwatering wastes resources.", 100, startY + #cropInfo * lineHeight*1.5 + 60, love.graphics.getWidth() - 200, "left")
         
     elseif section == "tips" then
-        -- 游戏提示部分
+        -- Game prompt section
         love.graphics.setColor(1, 1, 0.3)
         love.graphics.printf("Game Tips", 0, 100, love.graphics.getWidth(), "center")
         
@@ -996,28 +996,28 @@ function drawHelpContent(section)
 end
 
 function drawDayPopup()
-    -- 半透明背景遮罩覆盖整个屏幕
+    -- The semi-transparent background mask covers the entire screen
     love.graphics.setColor(0, 0, 0, 0.7 * popupAlpha)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     
-    -- 弹窗尺寸和位置
+    -- Pop-up window size and position
     local popupWidth = 300
     local popupHeight = 150
     local popupX = (love.graphics.getWidth() - popupWidth) / 2
     local popupY = (love.graphics.getHeight() - popupHeight) / 2
     
-    -- 绘制弹窗框和边框
+    -- Draw the pop-up window frame and border
     love.graphics.setColor(0.2, 0.2, 0.4, 0.9 * popupAlpha)
     love.graphics.rectangle("fill", popupX, popupY, popupWidth, popupHeight, 10, 10)
     love.graphics.setColor(0.8, 0.8, 1, popupAlpha)
     love.graphics.rectangle("line", popupX, popupY, popupWidth, popupHeight, 10, 10)
     
-    -- 弹窗标题文字
+    -- Pop-up window title text
     love.graphics.setFont(font)
     love.graphics.setColor(1, 1, 1, popupAlpha)
     love.graphics.printf("Welcome to Day " .. newDayNumber, popupX, popupY + 30, popupWidth, "center") 
     
-    -- 根据天气显示附加信息
+    -- Display additional information according to the weather
     love.graphics.setFont(smallFont)
     local weatherMessage = ""
     if weather == "Sunny" then
@@ -1027,18 +1027,18 @@ function drawDayPopup()
     end
     love.graphics.printf(weatherMessage, popupX, popupY + 80, popupWidth, "center")
     
-    -- 继续提示
+    -- Continue to prompt
     love.graphics.setFont(tinyFont)
     love.graphics.setColor(0.9, 0.9, 0.2, math.sin(love.timer.getTime() * 5) * 0.5 + 0.5 * popupAlpha)
     love.graphics.printf("Press any key to continue", popupX, popupY + 115, popupWidth, "center")
 end
 
 function drawLevelPopup()
-    -- 半透明背景遮罩
+    -- Semi-transparent background mask
     love.graphics.setColor(0, 0, 0, 0.7 * popupAlpha)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     
-    -- 弹窗框
+    -- Pop-up window frame
     local popupWidth = 400
     local popupHeight = 200
     local popupX = (love.graphics.getWidth() - popupWidth) / 2
@@ -1049,12 +1049,12 @@ function drawLevelPopup()
     love.graphics.setColor(0.8, 1, 0.7, popupAlpha)
     love.graphics.rectangle("line", popupX, popupY, popupWidth, popupHeight, 10)
     
-    -- 弹窗内容
+    -- Pop-up window content
     love.graphics.setFont(font)
     love.graphics.setColor(1, 1, 1, popupAlpha)
     love.graphics.printf(levelPopupText, popupX, popupY + 40, popupWidth, "center")
     
-    -- 解锁信息
+    -- Unlock information
     love.graphics.setFont(smallFont)
     local unlockText = ""
     if gameLevel == 2 then
@@ -1064,18 +1064,18 @@ function drawLevelPopup()
     end
     love.graphics.printf(unlockText, popupX, popupY + 100, popupWidth, "center")
     
-    -- 继续提示
+    -- Continue to prompt
     love.graphics.setFont(tinyFont)
     love.graphics.setColor(0.9, 0.9, 0.2, math.sin(love.timer.getTime() * 5) * 0.5 + 0.5 * popupAlpha)
     love.graphics.printf("Press any key to continue", popupX, popupY + 150, popupWidth, "center")
 end
 
 function drawWinPopup()
-    -- 半透明背景遮罩
+    -- Semi-transparent background mask
     love.graphics.setColor(0, 0, 0, 0.7 * popupAlpha)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     
-    -- 弹窗框
+    -- Pop-up window frame
     local popupWidth = 500
     local popupHeight = 250
     local popupX = (love.graphics.getWidth() - popupWidth) / 2
@@ -1086,7 +1086,7 @@ function drawWinPopup()
     love.graphics.setColor(0.8, 1, 0.7, popupAlpha)
     love.graphics.rectangle("line", popupX, popupY, popupWidth, popupHeight, 10)
     
-    -- 弹窗内容
+    -- Pop-up window content
     love.graphics.setFont(font)
     love.graphics.setColor(1, 1, 1, popupAlpha)
     love.graphics.printf("CONGRATULATIONS!", popupX, popupY + 40, popupWidth, "center")
