@@ -1594,22 +1594,22 @@ function processTransaction()
     end
 end
 
--- 从shop.lua继承的购买函数
+-- Purchase function inherited from shop.lua
 function buyItem(item, qty)
-    -- 检查金钱和行动点是否足够
+    -- Check if money and action points are sufficient
     local total = item.basePrice * qty
     if player.kes >= total and actionPoints > 0 then
         player.kes = player.kes - total
         player.inventory[item.name] = (player.inventory[item.name] or 0) + qty
-        actionPoints = actionPoints - 1  -- 扣除1点行动点
+        actionPoints = actionPoints - 1 
         print("Purchase successful, remaining action points:", actionPoints)
         
-        -- 如果行动点用完，自动进入下一天
+        -- Automatically enter the next day when action points are used up
         if actionPoints <= 0 then
             advanceToNextDay()
         end
     else
-        -- 提示失败原因
+        -- Prompt the reason for failure
         if actionPoints <= 0 then
             print("Not enough action points!")
         else
@@ -1618,18 +1618,18 @@ function buyItem(item, qty)
     end
 end
 
--- 从shop.lua继承的销售函数
+-- Sales function inherited from shop.lua
 function sellItem(item, qty)
-    -- 检查库存和行动点
+    -- Check inventory and action points
     local stock = player.inventory[item.name] or 0
     if stock >= qty and actionPoints > 0 then
         local earnings = item.basePrice * 0.8 * qty
         player.kes = player.kes + earnings
         player.inventory[item.name] = stock - qty
-        actionPoints = actionPoints - 1  -- 扣除1点行动点
+        actionPoints = actionPoints - 1
         print("Purchase successful, remaining action points:", actionPoints)
         
-        -- 行动点归零时进入下一天
+        -- Action points reset to zero and enter the next day
         if actionPoints <= 0 then
             advanceToNextDay()
         end
@@ -1642,19 +1642,19 @@ function sellItem(item, qty)
     end
 end
 
--- 从shop.lua继承的货币格式化函数
+-- Currency formatting functions inherited from shop.lua
 function formatKES(amount)
     return "KSh "..string.format("%.2f", amount):reverse():gsub("(%d%d%d)", "%1,"):reverse()
 end
 
--- 从shop.lua继承的商品过滤函数
+-- Product filtering function inherited from shop.lua
 function filterItems(isShop)
     return (isShop 
         and {shopItems[1], shopItems[2], shopItems[3], shopItems[4]} 
         or {shopItems[5], shopItems[6], shopItems[7], shopItems[8]})
 end
 
--- 从shop.lua继承的数量调整函数
+-- Quantity adjustment function inherited from shop.lua
 function adjustQuantity(btn)
     if btn == "-5" then quantity = math.max(1, quantity-5) end
     if btn == "-1" then quantity = math.max(1, quantity-1) end
@@ -1663,10 +1663,10 @@ function adjustQuantity(btn)
 end
 
 function love.mousepressed(x, y, button)
-      -- 添加帮助界面的鼠标点击处理
+      -- Add mouse click processing to the help interface
       if gameState == "help" and button == 1 then
         if helpSection == nil and helpTopicHover ~= nil then
-            -- 如果在主题列表页面点击了某个主题
+            -- Click a topic on the topic list page
             helpSection = helpTopicHover
         end
     end
@@ -1685,7 +1685,7 @@ function love.mousepressed(x, y, button)
                    y >= cellY and y <= cellY + cellSize then
 
                     if grid[gridX][gridY].status ~= "locked" then
-                        -- 空地种植
+                        -- Planting in open space
                         if grid[gridX][gridY].status == "empty" then
                             if player.inventory[selectedSeed] and player.inventory[selectedSeed] > 0 and actionPoints > 0 then
                                 grid[gridX][gridY] = {
@@ -1706,12 +1706,12 @@ function love.mousepressed(x, y, button)
                                 end
                             end
 
-                        -- 成熟作物收割
+                        -- Harvesting mature crops
                         elseif grid[gridX][gridY].status == "matured" and actionPoints > 0 then
                             local cropKey = grid[gridX][gridY].crop
                             local cropName = cropKey:gsub("_seed", "")
                             player.inventory[cropName] = (player.inventory[cropName] or 0) + 1  -- 直接存入作物
-                            -- 检查是否满足通关条件（所有作物各5个）
+                            -- Check if the clearance conditions are met (5 of each crop)
                             local allComplete = true
                             for _, crop in ipairs({"Cabbage", "Beans", "Maize", "Sweet_Potato"}) do
                                 if (player.inventory[crop] or 0) < 5 then
@@ -1721,13 +1721,13 @@ function love.mousepressed(x, y, button)
                             end
                         
                             if allComplete then
-                                -- 显示通关弹窗
+                                -- Show clearance pop-up
                                 showWinPopup = true
                                 popupTimer = 0
                                 popupAlpha = 0
                                 popupFadeIn = true
                             else
-                                -- 检查是否满足关卡升级条件
+                                -- Check whether the level upgrade conditions are met
                                 if checkLevelUp() then
                                     gameLevel = gameLevel + 1
                                     levelPopupText = "Welcome to Level " .. gameLevel
@@ -1736,7 +1736,7 @@ function love.mousepressed(x, y, button)
                                     popupAlpha = 0
                                     popupFadeIn = true
                                     
-                                    -- 根据关卡解锁土地
+                                    -- Unlock lands according to levels
                                     if gameLevel == 2 then
                                         for x = 1, gridSize do
                                             for y = 1, gridSize do
@@ -1759,7 +1759,7 @@ function love.mousepressed(x, y, button)
                                 end
                             end
                         
-                            -- 清除格子
+                            -- Clear Grid
                             grid[gridX][gridY] = {
                                 status = "empty",
                                 crop = nil,
@@ -1795,62 +1795,57 @@ function love.mousepressed(x, y, button)
     end
 end
 
--- 新增函数：推进到下一天的逻辑
+-- Advance to the next day
 function advanceToNextDay()
-    -- 保存当前天数（用于弹窗显示）
     local oldDay = day
     day = day + 1
-    --  每日健康减少  --
-    player.health = math.max(0, player.health - 5)  -- 每天减少5点健康值
+    --  Daily health reduction
+    player.health = math.max(0, player.health - 5)
     
-        --  修改特餐设置  --
-    -- 随机选择当日特餐
+    -- Random special meal of the day
     kitchenMenu.dailyMeal = possibleMeals[math.random(1, #possibleMeals)]
-    -- 重置所有配方加成
     for _, recipe in pairs(recipes) do
-        recipe.health = recipe.baseHealth  -- 清除之前的加成
+        recipe.health = recipe.baseHealth 
     end
-    -- 设置当日特餐加成
     if recipes[kitchenMenu.dailyMeal] then
         recipes[kitchenMenu.dailyMeal].health = recipes[kitchenMenu.dailyMeal].baseHealth * 1.2
     end
     
-    -- 重置行动点
     actionPoints = 20
     
-     -- 根据健康值调整行动点
+     -- Adjust action points based on health value
      if player.health <= 0 then
-        actionPoints = 0  -- 健康值为0时无法行动
-        player.maxHealth = 100  -- 重置最大健康值（防止修改）
+        actionPoints = 0  -- When health is 0, you cannot move
+        player.maxHealth = 100 
     elseif player.health <= 30 then
-        actionPoints = 10  -- 健康值过低时行动点上限为10
-        player.maxHealth = 100  -- 重置最大健康值（防止修改）
+        actionPoints = 10  -- When health is too low, the action point limit is 10
+        player.maxHealth = 100 
     else
-        actionPoints = 20  -- 正常行动点
+        actionPoints = 20 
     end
     
-    -- 随机天气
+    -- Random Weather
     local newWeather = weatherTypes[math.random(1, #weatherTypes)]
     while newWeather == weather do
         newWeather = weatherTypes[math.random(1, #weatherTypes)]
     end
     weather = newWeather
     
-    -- 根据天气调整水量
+    -- Adjust water volume according to weather
     if weather == "Sunny" then
         water = 80
     elseif weather == "Rainy" then
         water = 100
     end
     
-    -- 作物生长和成熟逻辑
+    -- Crop growth and maturity logic
     for x = 1, gridSize do
         for y = 1, gridSize do
             local plot = grid[x][y]
             if plot.status == "planted" then
                 local cropData = crops[plot.crop]
                 
-                -- 重置每天的浇水计数和浇水上限
+                -- Reset daily watering count and limit
                 plot.dailyWateringCount = 0
                 plot.wateringLimit = cropData.dailyWateringLimit
 
@@ -1858,8 +1853,6 @@ function advanceToNextDay()
         end
     end
     
-    -- 检查是否满足升级条件
-        -- 检查是否满足升级条件
         if checkLevelUp() then
             gameLevel = gameLevel + 1
             levelPopupText = "Welcome to Level " .. gameLevel
@@ -1868,7 +1861,7 @@ function advanceToNextDay()
             popupAlpha = 0
             popupFadeIn = true
     
-            -- 根据关卡解锁土地
+            -- Unlock lands according to levels
             if gameLevel == 2 then
                 for x = 1, gridSize do
                     for y = 1, gridSize do
@@ -1886,11 +1879,11 @@ function advanceToNextDay()
                     end
                 end
             end
-    
-            return  -- 避免显示 Day 弹窗
+
+            return
         end
     
-        -- 否则显示普通天数弹窗
+        -- Otherwise, a pop-up window showing normal days will be displayed.
         showDayPopup = true
         popupTimer = 0
         newDayNumber = day
@@ -1902,7 +1895,7 @@ end
 
 function checkLevelUp()
     if gameLevel >= #levelRequirements then 
-        -- 检查是否满足最终通关条件（累计收获）
+        -- Check whether the final clearance conditions are met
         local reqCrops, reqCount = unpack(levelRequirements[#levelRequirements])
         local cropNames = {"Cabbage", "Beans", "Maize", "Sweet_Potato"}
         
@@ -1912,15 +1905,15 @@ function checkLevelUp()
             end
         end
         
-        -- 满足最终通关条件
+        -- Satisfy the final clearance conditions
         showWinPopup = true
         popupTimer = 0
         popupAlpha = 0
         popupFadeIn = true
-        return false -- 不再升级关卡
+        return false -- No more level upgrades
     end
 
-    -- 正常关卡升级检查
+    -- Normal level upgrade check
     local reqCrops, reqCount = unpack(levelRequirements[gameLevel])
     local cropNames = {"Cabbage", "Beans", "Maize", "Sweet_Potato"}
 
@@ -1930,21 +1923,21 @@ function checkLevelUp()
         end
     end
     
-    return true -- 允许升级到下一关
+    return true -- Allows to upgrade to the next level
 end
 
 function drawInteractionTip()
-    -- 绘制交互提示
+    -- Draw interactive prompts
     if showInteractionTip and interactionTip ~= "" then
         local tipX = Animation.player.x
         local tipY = Animation.player.y - 30
         
-        -- 提示背景
+        -- Tips Background
         love.graphics.setColor(0, 0, 0, 0.7)
         local textWidth = tinyFont:getWidth(interactionTip) + 10
         love.graphics.rectangle("fill", tipX - textWidth/2, tipY - 15, textWidth, 25, 5, 5)
         
-        -- 提示文字
+        -- Tips Text
         love.graphics.setFont(tinyFont)
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf(interactionTip, tipX - textWidth/2, tipY - 10, textWidth, "center")
