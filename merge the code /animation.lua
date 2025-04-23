@@ -8,14 +8,14 @@ function Animation:load()
     self.player.speed = 1.5
     self.player.sprite = love.graphics.newImage("art/NewSprite.png")
     
-    -- 计算每一帧的尺寸
+    -- Calculate the size of each frame
     local frameWidth = self.player.sprite:getWidth()/3
     local frameHeight = math.floor(self.player.sprite:getHeight()/4)
     self.player.grid = self.anim8.newGrid(frameWidth, frameHeight, 
                                          self.player.sprite:getWidth(), 
                                          self.player.sprite:getHeight(), 2, 5)
     
-    -- 计算缩放因子，使最终尺寸为45×45
+    -- Calculate the scaling factor to make the final size 30 × 50
     self.player.scaleX = 30 / frameWidth
     self.player.scaleY = 50 / frameHeight
     
