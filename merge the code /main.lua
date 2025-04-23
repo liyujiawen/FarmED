@@ -1198,7 +1198,7 @@ function drawWateringMode()
     love.graphics.setFont(smallFont)
     love.graphics.printf("Click to Water, Select Crop:", 0, 130, love.graphics.getWidth(), "center")
 
-    -- 显示作物选项
+    -- Display crop options
     love.graphics.setFont(smallFont)
     local startY = 180
     local spacing = 40
@@ -1207,27 +1207,27 @@ function drawWateringMode()
     love.graphics.printf("Cabbage (-7 Water)", 0, startY + spacing * 2, love.graphics.getWidth(), "center")
     love.graphics.printf("Maize (-9 Water)", 0, startY + spacing * 3, love.graphics.getWidth(), "center")
 
-    -- **水条参数**
-    local barWidth = 300 -- 水条的最大宽度
-    local barHeight = 20 -- 水条高度
-    local barX = love.graphics.getWidth() / 2 - barWidth / 2 -- 水条位置
-    local barY = startY + spacing * 5 -- 水条位置（放在作物选项下方）
+    -- **Water strip parameters**
+    local barWidth = 300 -- The maximum width of the water bar
+    local barHeight = 20 -- Water bar height
+    local barX = love.graphics.getWidth() / 2 - barWidth / 2 -- Water bar position
+    local barY = startY + spacing * 5 -- Water bar position (placed below crop options)
     
-    -- **绘制水条背景**
-    love.graphics.setColor(0.2, 0.2, 0.2) -- 灰色背景
+    -- **Draw water bar background**
+    love.graphics.setColor(0.2, 0.2, 0.2) -- gray background
     love.graphics.rectangle("fill", barX, barY, barWidth, barHeight)
     
-    -- **绘制当前水量**
-    local waterRatio = math.max(water / 100, 0) -- 计算水量比例（最大 100）
-    love.graphics.setColor(0.0, 0.7, 1.0) -- 蓝色水条
+    -- **Draw the current water volume**
+    local waterRatio = math.max(water / 100, 0) -- Calculate the water volume ratio (maximum 100)
+    love.graphics.setColor(0.0, 0.7, 1.0) -- Blue water bar
     love.graphics.rectangle("fill", barX, barY, barWidth * waterRatio, barHeight)
     
-    -- **显示水量数值**
+    -- **Display water quantity value**
     love.graphics.setFont(smallFont)
     love.graphics.setColor(1, 1, 1)
     love.graphics.printf("Water: " .. water .. " / 100", 0, barY + 40, love.graphics.getWidth(), "center")
     
-    -- 退出提示
+    -- Exit prompt
     love.graphics.setColor(1, 0.7, 0.7)
     love.graphics.printf("Press ESC to Exit", 0, love.graphics.getHeight() - 100, love.graphics.getWidth(), "center")
 end
@@ -1237,7 +1237,7 @@ function love.keypressed(key)
         waterMode = false
         return
     end
-    -- 关卡弹窗关闭
+    -- Level pop-up window closed
     if showLevelPopup and popupTimer > 0.5 then
         showLevelPopup = false
         popupTimer = 0
@@ -1245,7 +1245,7 @@ function love.keypressed(key)
         return
     end
 
-    -- 天数弹窗关闭逻辑
+    -- Number of days popup closing logic
     if showDayPopup and popupTimer > 0.5 then
         showDayPopup = false
         popupTimer = 0
@@ -1253,7 +1253,7 @@ function love.keypressed(key)
         return
     end
 
-    -- 通关弹窗关闭
+    -- Close the clearance pop-up window
     if showWinPopup and popupTimer > 0.5 then
         showWinPopup = false
         popupTimer = 0
@@ -1261,12 +1261,12 @@ function love.keypressed(key)
         return
     end
 
-    -- 厨房弹窗关闭逻辑
+    -- Kitchen pop-up window closing logic
     if showKitchenPopup and key == "escape" then
         showKitchenPopup = false
         return
     end
-        -- 新增食物制作逻辑 --
+        -- Add food preparation logic --
         if showKitchenPopup then
             if key >= "1" and key <= "4" then
                 local index = tonumber(key)
@@ -1275,7 +1275,7 @@ function love.keypressed(key)
                     local recipe = recipes[mealName]
                     local canCraft = true
                     
-                    -- 检查材料
+                    -- Check the materials
                     for item, amount in pairs(recipe.ingredients) do
                         if (player.inventory[item] or 0) < amount then
                             canCraft = false
@@ -1284,32 +1284,32 @@ function love.keypressed(key)
                     end
                     
                     if canCraft then
-                        -- 扣除材料
+                        -- Deducting materials
                         for item, amount in pairs(recipe.ingredients) do
                             if (player.inventory[item] or 0) < amount then
                                 canCraft = false
                                 break
                             end
                         end
-                        -- 消耗食材
+                        -- Consuming food ingredients
                         for item, amount in pairs(recipe.ingredients) do
                             player.inventory[item] = player.inventory[item] - amount
                         end
-                        -- 计算恢复值并更新健康--
+                        -- Calculate recovery values and update health--
                         local healthGain = recipe.baseHealth
                         if kitchenMenu.dailyMeal == mealName then
                             healthGain = math.floor(healthGain * 1.2)
                         end
-                        -- 添加健康上限限制
+                        -- Add health limit restrictions
                         player.health = math.min(player.maxHealth, player.health + healthGain)
                     else
                         print("Not enough ingredients!")
                     end
                 end
             end
-            return  -- 阻止其他按键处理
+            return  -- Block other button processing
         end
-        -- 逻辑结束 --
+        -- logical end --
 
     if gameState == "menu" then
         if key == "return" then
@@ -1326,7 +1326,7 @@ function love.keypressed(key)
         end
 
     elseif gameState == "game" then
-        -- 直接处理 F 键浇水，不再需要 waterMode
+        -- Directly handle watering with F key, no longer requiring waterMode
         if key == "f" or key == "F" then
             if nearPlot then
                 local plot = grid[nearPlotX][nearPlotY]
@@ -1380,10 +1380,10 @@ function love.keypressed(key)
             selectedSeed = "Sweet_Potato_seed"
         elseif key == "n" or key == "N" then
             advanceToNextDay()
-            local r = math.random()  -- 返回 0~1 的随机小数
-            if r < 0.2 then         -- 20% 的概率雨天
+            local r = math.random()  -- Return a random decimal from 0 to 1
+            if r < 0.2 then         -- 20% chance of rainy weather
                 weather = "Rainy"
-            else                   -- 80% 的概率晴天
+            else                   -- 80% chance of sunny weather
                 weather = "Sunny"
             end
             
@@ -1403,11 +1403,11 @@ function love.keypressed(key)
             previousGameState = gameState
             gameState = "help"
         elseif key == "escape" and day == 1 then
-            -- 可选：关闭教程
+            -- Optional: Close tutorial
         elseif key == "t" or key == "T" then
             waterMode = not waterMode
         elseif key == "space" then
-             -- 如果健康值为0，不允许任何消耗行动点的操作
+             -- If the health value is 0, no operation that consumes action points is allowed
     if player.health <= 0 then
         return
     end
@@ -1446,7 +1446,7 @@ function love.keypressed(key)
                         local cropName = cropKey:gsub("_seed", "")
                         player.inventory[cropName] = (player.inventory[cropName] or 0) + 1
                         
-                        -- 检查是否满足通关条件（所有作物各5个）
+                        -- Check if the customs clearance conditions are met (5 for each crop)
                         local allComplete = true
                         for _, crop in ipairs({"Cabbage", "Beans", "Maize", "Sweet_Potato"}) do
                             if (player.inventory[crop] or 0) < 5 then
@@ -1456,13 +1456,13 @@ function love.keypressed(key)
                         end
                         
                         if allComplete then
-                            -- 显示通关弹窗
+                            -- Display clearance pop-up window
                             showWinPopup = true
                             popupTimer = 0
                             popupAlpha = 0
                             popupFadeIn = true
                         else
-                            -- 检查是否满足关卡升级条件
+                            -- Check if the level upgrade conditions are met
                             if checkLevelUp() then
                                 gameLevel = gameLevel + 1
                                 levelPopupText = "Welcome to Level " .. gameLevel
@@ -1471,7 +1471,7 @@ function love.keypressed(key)
                                 popupAlpha = 0
                                 popupFadeIn = true
                                 
-                                -- 根据关卡解锁土地
+                                -- Unlock the land based on the level
                                 if gameLevel == 2 then
                                     for x = 1, gridSize do
                                         for y = 1, gridSize do
@@ -1492,7 +1492,7 @@ function love.keypressed(key)
                             end
                         end
                         
-                        -- 清除格子
+                        -- Clear the grid
                         grid[nearPlotX][nearPlotY] = {
                             status = "empty",
                             crop = nil,
@@ -1512,7 +1512,7 @@ function love.keypressed(key)
             end
         end
 
-        -- 如果水用完则进入下一天
+        -- If the water runs out, move on to the next day
         if water <= 0 then
             day = day + 1
             local newWeather = weatherTypes[math.random(1, #weatherTypes)]
@@ -1543,10 +1543,10 @@ function love.keypressed(key)
     elseif gameState == "help" then
         if key == "escape" then
             if helpSection ~= nil then
-                -- 如果在章节页面，按ESC返回主题列表
+                -- If on the chapter page, press ESC to return to the topic list
                 helpSection = nil
             else
-                -- 如果在主题列表，按ESC返回游戏
+                -- If in the theme list, press ESC to return to the game
                 if previousGameState then
                     gameState = previousGameState
                 else
@@ -1554,7 +1554,7 @@ function love.keypressed(key)
                 end
             end
         elseif key == "backspace" and helpSection ~= nil then
-            -- 按Backspace键也可以返回主题列表
+            -- Pressing the Backspace key can also return to the list of topics
             helpSection = nil
         end
     end
@@ -1563,25 +1563,25 @@ function love.keypressed(key)
 end
 
 function handleNavigation(key)
-    local items = filterItems(gameState == "shop") -- 获取当前商品列表（商店或仓库）
+    local items = filterItems(gameState == "shop") -- Get the current product list (store or warehouse)
     
-    -- 上下键选择商品
+    -- Up and down keys to select products
     if key == "up" then
         selectedItem = math.max(1, selectedItem - 1)
     elseif key == "down" then
         selectedItem = math.min(#items, selectedItem + 1)
     
-    -- 商店购买/仓库出售
+    -- Shop purchase/warehouse sale
     elseif (key == "b" and gameState == "shop") or (key == "s" and gameState == "warehouse") then
         processTransaction()
     end
 end
 
--- 从shop.lua继承的交易处理函数
+-- Inherited transaction processing functions from shop.lua
 function processTransaction()
     local item = filterItems(gameState == "shop")[selectedItem]
     
-    -- 提前检查行动点，避免无意义操作
+    -- Check action points in advance to avoid meaningless operations
     if actionPoints > 0 then
         if gameState == "shop" then
             buyItem(item, quantity)
