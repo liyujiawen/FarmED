@@ -1092,42 +1092,42 @@ function drawWinPopup()
     love.graphics.printf("CONGRATULATIONS!", popupX, popupY + 40, popupWidth, "center")
     love.graphics.printf("Great job planting and harvesting! Keep growing—food security starts with you!", popupX, popupY + 90, popupWidth, "center")
     
-    -- 继续提示
+    -- Continue to prompt
     love.graphics.setFont(tinyFont)
     love.graphics.setColor(0.9, 0.9, 0.2, math.sin(love.timer.getTime() * 5) * 0.5 + 0.5 * popupAlpha)
     love.graphics.printf("Press any key to continue", popupX, popupY + 230, popupWidth, "center")
 end
 
 function drawKitchenPopup()
-    -- 弹窗尺寸设置 (600x500)
+    -- Pop-up window size setting (600x500)
     local popupWidth = 600
     local popupHeight = 500
     local popupX = (love.graphics.getWidth() - popupWidth) / 2
     local popupY = (love.graphics.getHeight() - popupHeight) / 2
 
-    -- 字体设置（标题/内容/小字）
+    -- Font Settings (Title/Content/small print)
     local titleFont = love.graphics.newFont(24)
     local contentFont = love.graphics.newFont(18)
     local smallFont = love.graphics.newFont(16)
 
-    -- 绘制黄色背景
+    -- Draw a yellow background
     love.graphics.setColor(1, 0.95, 0.7)
     love.graphics.rectangle("fill", popupX, popupY, popupWidth, popupHeight, 10)
     love.graphics.setColor(0.6, 0.5, 0.3)
     love.graphics.rectangle("line", popupX, popupY, popupWidth, popupHeight, 10)
 
-    -- 主标题
+    -- Main Title
     love.graphics.setFont(titleFont)
     love.graphics.setColor(0.3, 0.2, 0.1)
     love.graphics.printf("KITCHEN", popupX, popupY + 20, popupWidth, "center")
 
-    -- 今日特餐
+    -- Today's Special Meal
     love.graphics.setFont(contentFont)
     love.graphics.printf("Today’s Recommended Menu:", popupX, popupY + 70, popupWidth, "center")
     love.graphics.setColor(0.7, 0.3, 0.1)
     love.graphics.printf(kitchenMenu.dailyMeal, popupX, popupY + 100, popupWidth, "center")
 
-    -- 配方列表
+    -- Recipe list
     love.graphics.setFont(contentFont)
     local startY = popupY + 150
     local lineSpacing = 35
@@ -1137,7 +1137,7 @@ function drawKitchenPopup()
         local ingredientsText = ""
         local canCraft = true
 
-        -- 生成材料需求文本
+        -- Generate the material requirements text
         for item, amount in pairs(recipe.ingredients) do
             ingredientsText = ingredientsText .. item .. " x" .. amount .. "  "
             if (player.inventory[item] or 0) < amount then
@@ -1145,27 +1145,27 @@ function drawKitchenPopup()
             end
         end
 
-        -- 设置文字颜色
+        -- Set the text color
         local textColor = canCraft and {0.2, 0.5, 0.2} or {0.5, 0.5, 0.5}
         local healthValue = recipe.baseHealth
 
-        -- 当日特餐加成
+        -- Same-day special meal bonus
         if kitchenMenu.dailyMeal == mealName then
             healthValue = healthValue * 1.2
         end
 
-        -- 左列：配方编号和名称
+        -- Left column: Formula number and name
         love.graphics.setColor(textColor)
         love.graphics.printf(i .. ". " .. mealName, popupX + 30, startY, 300, "left")
 
-        -- 右列：材料需求和恢复值
+        -- Right column: Material requirements and recovery values
         love.graphics.printf(ingredientsText .. "+" .. math.floor(healthValue) .. " HP", 
             popupX + 300, startY, 250, "right")
 
         startY = startY + lineSpacing
     end
 
-    -- 库存显示
+    -- Inventory display
     love.graphics.printf(
     "Food Inventory:\n"..
     "Cabbage: " .. (player.inventory.Cabbage or 0) .. "  " ..
@@ -1175,13 +1175,13 @@ function drawKitchenPopup()
     popupX + 30, popupY + 400, popupWidth - 60, "left"
 )
 
-    -- 健康值显示
+    -- Health value display
     love.graphics.setFont(contentFont)
     love.graphics.setColor(0.8, 0.2, 0.2)
     love.graphics.printf("HEALTH: " .. player.health .. "/" .. player.maxHealth, 
         popupX, popupY + 440, popupWidth, "center")
 
-    -- 关闭提示
+    -- Close prompt
     love.graphics.setFont(smallFont)
     love.graphics.setColor(0.4, 0.3, 0.2)
     love.graphics.printf("Press ESC to close", popupX, popupY + 470, popupWidth, "center")
